@@ -656,7 +656,7 @@ void threadlocal_stats_aggregate(struct thread_stats *stats) {
 
     /* The struct has a mutex, but we can safely set the whole thing
      * to zero since it is unused when aggregating. */
-    memset(stats, 0, sizeof(*stats));
+    tm_memset(stats, 0, sizeof(*stats));
 
     for (ii = 0; ii < settings.num_threads; ++ii) {
         // [branch 010] Replace per-thread stats locks with transactions

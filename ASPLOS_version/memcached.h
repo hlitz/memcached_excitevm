@@ -47,6 +47,8 @@ void tm_msg_and_die(const char* msg);
 __attribute__((transaction_safe))
 int tm_memcmp(const void *s1, const void *s2, size_t n);
 __attribute__((transaction_safe))
+void* tm_memset(void *s, int c, size_t len);
+__attribute__((transaction_safe))
 void *tm_memcpy(void *dst, const void *src, size_t len);
 __attribute__((transaction_safe))
 size_t tm_strlen(const char *s);

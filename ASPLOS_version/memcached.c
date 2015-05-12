@@ -48,7 +48,8 @@
 #include <stddef.h>
 
 // [branch 012] Include support for registering onCommit handlers:
-#include "/home/spear/gcc/src/gcc_trunk/libitm/libitm.h"
+//#include "/home/spear/gcc/src/gcc_trunk/libitm/libitm.h"
+#include "/home/hlitz/tm-persistence/min-gcc/libitm/libitm.h"
 
 /* FreeBSD 4.x doesn't have IOV_MAX exposed. */
 #ifndef IOV_MAX
@@ -72,7 +73,7 @@ void tm_assert_internal(const char *filename, int linenum, const char *funcname,
 // [branch 008] This is our 'safe' printf-and-abort function
 void tm_msg_and_die(const char* msg)
 {
-    fprintf(stderr, msg);
+    //fprintf(stderr, msg);
     abort();
 }
 
@@ -132,6 +133,40 @@ void * tm_memcpy(void *dst, const void *src, size_t len)
     }
     return dst;
 }
+
+void* tm_memset(void *dst, int c, size_t len) {
+    size_t i;
+    if ((uintptr_t)dst % sizeof(long) == 0 &&
+        len % sizeof(long) == 0)
+    {
+        long *d = dst;
+        // long *s = src;
+        for (i=0; i<len/sizeof(long); i++) {
+            d[i] = c;
+        }
+    }
+    else {
+        char *d = dst;
+        //const char *s = src;
+        for (i=0; i<len; i++) {
+            d[i] = c;//s[i];
+        }
+    }
+    return dst;
+
+    /*
+
+
+
+    unsigned char *dst = s;
+    while (len > 0) {
+        *dst = (unsigned char) c;
+        dst++;
+        len--;
+    }
+    return s;*/
+}
+
 
 // [branch 009] provide a safe implementation of strlen
 //
@@ -197,6 +232,7 @@ void *tm_realloc(void *ptr, size_t size, size_t old_size)
         copySize = size;
     if (old_size > 0) {
         tm_memcpy(newp, oldp, old_size);
+        tm_memset(oldp, 0x0, old_size);
     }
     free(oldp);
     return newp;
@@ -224,7 +260,7 @@ int tm_isspace(int c)
 __attribute__((transaction_pure))
 static void *pure_memcpy(void *dest, const void *src, size_t n)
 {
-    return memcpy(dest, src, n);
+    return tm_memcpy(dest, src, n);
 }
 
 // [branch 009b] Provide a safe strncpy function that copies its argument to
@@ -368,9 +404,9 @@ void registerOnCommitHandler(void (*func)(void*), void *param)
 // [branch 012] This is a mechanism for delaying perror
 void delayed_perror(int error_number, char *message)
 {
-    char buf[4096];
-    strerror_r(error_number, buf, 4096);
-    fprintf(stderr, "%s: %s\n", message, buf);
+    //char buf[4096];
+    //strerror_r(error_number, buf, 4096);
+    //fprintf(stderr, "%s: %s\n", message, buf);
 }
 
 /*
@@ -1141,8 +1177,8 @@ static void out_string(conn *c, const char *str) {
         len = strlen(str);
     }
 
-    memcpy(c->wbuf, str, len);
-    memcpy(c->wbuf + len, "\r\n", 2);
+    tm_memcpy(c->wbuf, str, len);
+    tm_memcpy(c->wbuf + len, "\r\n", 2);
     c->wbytes = len + 2;
     c->wcurr = c->wbuf;
 
@@ -1602,7 +1638,7 @@ static void process_bin_touch(conn *c) {
                 char *ofs = c->wbuf + sizeof(protocol_binary_response_header);
                 add_bin_header(c, PROTOCOL_BINARY_RESPONSE_KEY_ENOENT,
                         0, nkey, nkey);
-                memcpy(ofs, key, nkey);
+                tm_memcpy(ofs, key, nkey);
                 add_iov(c, ofs, nkey);
                 conn_set_state(c, conn_mwrite);
                 c->write_and_go = conn_new_cmd;
@@ -1686,7 +1722,7 @@ static void process_bin_get(conn *c) {
                 char *ofs = c->wbuf + sizeof(protocol_binary_response_header);
                 add_bin_header(c, PROTOCOL_BINARY_RESPONSE_KEY_ENOENT,
                         0, nkey, nkey);
-                memcpy(ofs, key, nkey);
+                tm_memcpy(ofs, key, nkey);
                 add_iov(c, ofs, nkey);
                 conn_set_state(c, conn_mwrite);
                 c->write_and_go = conn_new_cmd;
@@ -1725,15 +1761,15 @@ static void append_bin_stats(const char *key, const uint16_t klen,
         .response.opaque = c->opaque
     };
 
-    memcpy(buf, header.bytes, sizeof(header.response));
+    tm_memcpy(buf, header.bytes, sizeof(header.response));
     buf += sizeof(header.response);
 
     if (klen > 0) {
-        memcpy(buf, key, klen);
+        tm_memcpy(buf, key, klen);
         buf += klen;
 
         if (vlen > 0) {
-            memcpy(buf, val, vlen);
+            tm_memcpy(buf, val, vlen);
         }
     }
 
@@ -2117,7 +2153,7 @@ static void process_bin_complete_sasl_auth(conn *c) {
     int vlen = c->binary_header.request.bodylen - nkey;
 
     char mech[nkey+1];
-    memcpy(mech, ITEM_key((item*)c->item), nkey);
+    tm_memcpy(mech, ITEM_key((item*)c->item), nkey);
     mech[nkey] = 0x00;
 
     if (settings.verbose)
@@ -3786,7 +3822,7 @@ enum delta_result_type do_add_delta(conn *c, const char *key, const size_t nkey,
 
         // [branch 009b] Use safe memcpy
         tm_memcpy(ITEM_data(it), buf, res);
-        memset(ITEM_data(it) + res, ' ', it->nbytes - res - 2);
+        tm_memset(ITEM_data(it) + res, ' ', it->nbytes - res - 2);
         do_item_update(it);
     }
 

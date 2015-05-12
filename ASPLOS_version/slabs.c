@@ -172,7 +172,7 @@ void slabs_init(const size_t limit, const double factor, const bool prealloc) {
         }
     }
 
-    memset(slabclass, 0, sizeof(slabclass));
+    tm_memset(slabclass, 0, sizeof(slabclass));
 
     while (++i < POWER_LARGEST && size <= settings.item_size_max / factor) {
         /* Make sure items are always n-byte aligned */
@@ -275,7 +275,7 @@ static int do_slabs_newslab(const unsigned int id) {
         return 0;
     }
 
-    memset(ptr, 0, (size_t)len);
+    tm_memset(ptr, 0, (size_t)len);
     split_slab_page_into_freelist(ptr, id);
 
     p->slab_list[p->slabs++] = ptr;
@@ -745,7 +745,7 @@ static void slab_rebalance_finish(void) {
     s_cls->slabs--;
     s_cls->killing = 0;
 
-    memset(slab_rebal.slab_start, 0, (size_t)settings.item_size_max);
+    tm_memset(slab_rebal.slab_start, 0, (size_t)settings.item_size_max);
 
     d_cls->slab_list[d_cls->slabs++] = slab_rebal.slab_start;
     split_slab_page_into_freelist(slab_rebal.slab_start,

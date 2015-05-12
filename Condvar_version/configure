@@ -5942,7 +5942,7 @@ rm -f core conftest.err conftest.$ac_objext \
   saved_LDFLAGS="$saved_LDFLAGS -Wl,-R$ledir/lib"
 else
   if test "$GCC" = "yes"; then :
-  saved_LDFLAGS="$saved_LDFLAGS -Wl,-rpath,$ledir/lib"
+    saved_LDFLAGS="$saved_LDFLAGS -Wl,-rpath,$ledir/lib"
 fi
 fi
        else
