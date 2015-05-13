@@ -9,6 +9,19 @@
 
 #include "cache.h"
 
+#define USE_REGULAR_MALLOC
+
+#ifdef USE_REGULAR_MALLOC
+#define excitevm_smalloc(X) malloc(X)
+#define excitevm_srealloc(X,Y) realloc(X,Y)
+#define excitevm_scalloc(X,Y) calloc(X,Y)
+#define excitevm_sfree(X) free(X)
+#define excitevm_init()
+#define excitevm_enter()
+#else
+#include "excitevm/excitevm_c.h"
+#endif
+
 #ifndef NDEBUG
 const uint64_t redzone_pattern = 0xdeadbeefcafebabe;
 int cache_error = 0;
@@ -19,14 +32,14 @@ const int initial_pool_size = 64;
 cache_t* cache_create(const char *name, size_t bufsize, size_t align,
                       cache_constructor_t* constructor,
                       cache_destructor_t* destructor) {
-    cache_t* ret = calloc(1, sizeof(cache_t));
+    cache_t* ret =  excitevm_scalloc(1, sizeof(cache_t));
     char* nm = strdup(name);
-    void** ptr = calloc(initial_pool_size, sizeof(void*));
+    void** ptr =  excitevm_scalloc(initial_pool_size, sizeof(void*));
     if (ret == NULL || nm == NULL || ptr == NULL ||
         pthread_mutex_init(&ret->mutex, NULL) == -1) {
-        free(ret);
-        free(nm);
-        free(ptr);
+         excitevm_sfree(ret);
+         excitevm_sfree(nm);
+         excitevm_sfree(ptr);
         return NULL;
     }
 
@@ -60,12 +73,14 @@ void cache_destroy(cache_t *cache) {
         if (cache->destructor) {
             cache->destructor(get_object(ptr), NULL);
         }
-        free(ptr);
+//assert(0);
+         excitevm_sfree(ptr);
     }
-    free(cache->name);
-    free(cache->ptr);
+//assert(0);
+     excitevm_sfree(cache->name);
+     excitevm_sfree(cache->ptr);
     pthread_mutex_destroy(&cache->mutex);
-    free(cache);
+     excitevm_sfree(cache);
 }
 
 void* cache_alloc(cache_t *cache) {
@@ -76,13 +91,14 @@ void* cache_alloc(cache_t *cache) {
         ret = cache->ptr[--cache->freecurr];
         object = get_object(ret);
     } else {
-        object = ret = malloc(cache->bufsize);
+        object = ret = excitevm_smalloc(cache->bufsize);
         if (ret != NULL) {
             object = get_object(ret);
 
             if (cache->constructor != NULL &&
                 cache->constructor(object, NULL, 0) != 0) {
-                free(ret);
+//assert(0);
+                 excitevm_sfree(ret);
                 object = NULL;
             }
         }
@@ -130,7 +146,7 @@ void cache_free(cache_t *cache, void *ptr) {
     } else {
         /* try to enlarge free connections array */
         size_t newtotal = cache->freetotal * 2;
-        void **new_free = realloc(cache->ptr, sizeof(char *) * newtotal);
+        void **new_free =  excitevm_srealloc(cache->ptr, sizeof(char *) * newtotal);
         if (new_free) {
             cache->freetotal = newtotal;
             cache->ptr = new_free;
@@ -139,7 +155,8 @@ void cache_free(cache_t *cache, void *ptr) {
             if (cache->destructor) {
                 cache->destructor(ptr, NULL);
             }
-            free(ptr);
+//assert(0);
+             excitevm_sfree(ptr);
 
         }
     }

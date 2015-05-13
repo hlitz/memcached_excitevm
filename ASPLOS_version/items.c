@@ -42,17 +42,30 @@ typedef struct {
     uint64_t evicted_unfetched;
 } itemstats_t;
 
-static item *heads[LARGEST_ID];
-static item *tails[LARGEST_ID];
-static itemstats_t itemstats[LARGEST_ID];
-static unsigned int sizes[LARGEST_ID];
+//static item *heads[LARGEST_ID];
+//static item *tails[LARGEST_ID];
+//static itemstats_t itemstats[LARGEST_ID];
+//static unsigned int sizes[LARGEST_ID];
+
+//globals->heap
+static item **heads;
+static item **tails;
+static itemstats_t* itemstats;
+static unsigned int* sizes;
+
+void init_item_globals(void){
+    heads = (item**)excitevm_smalloc(sizeof(item*)*LARGEST_ID);
+    tails = (item**)excitevm_smalloc(sizeof(item*)*LARGEST_ID);
+    itemstats = (itemstats_t*)excitevm_smalloc(sizeof(itemstats_t)*LARGEST_ID);
+    sizes =(unsigned int*)excitevm_smalloc(sizeof(unsigned int*)*LARGEST_ID);
+}
 
 void item_stats_reset(void) {
     // [branch 002] Replaced cache_lock critical section lock with relaxed
     //              transaction
     // [branch 005] This transaction can be atomic
     __transaction_atomic {
-    memset(itemstats, 0, sizeof(itemstats));
+        tm_memset(itemstats, 0, sizeof(itemstats_t)*LARGEST_ID);
     }
 }
 
@@ -100,6 +113,7 @@ static size_t item_make_header(const uint8_t nkey, const int flags, const int nb
 }
 
 /*@null@*/
+__attribute__((transaction_safe))
 item *do_item_alloc(char *key, const size_t nkey, const int flags,
                     const rel_time_t exptime, const int nbytes,
                     const uint32_t cur_hv) {
@@ -372,6 +386,8 @@ void do_item_unlink(item *it, const uint32_t hv) {
 /* FIXME: Is it necessary to keep this copy/pasted code? */
 void do_item_unlink_nolock(item *it, const uint32_t hv) {
     MEMCACHED_ITEM_UNLINK(ITEM_key(it), it->nkey, it->nbytes);
+    __transaction_atomic{ //need to do this in a transaction to make
+        //writes visible for excite-vm
     if ((it->it_flags & ITEM_LINKED) != 0) {
         it->it_flags &= ~ITEM_LINKED;
         // [branch 002] Replaced STATS_LOCK with relaxed transaction
@@ -383,6 +399,7 @@ void do_item_unlink_nolock(item *it, const uint32_t hv) {
         assoc_delete(ITEM_key(it), it->nkey, hv);
         item_unlink_q(it);
         do_item_remove(it);
+    }
     }
 }
 
@@ -441,7 +458,8 @@ char *do_item_cachedump(const unsigned int slabs_clsid, const unsigned int limit
 
     it = heads[slabs_clsid];
 
-    buffer = malloc((size_t)memlimit);
+    //__transaction_atomic { //assaf
+    buffer = excitevm_smalloc((size_t)memlimit);
     if (buffer == 0) return NULL;
     bufcurr = 0;
 
@@ -644,7 +662,8 @@ item *do_item_get(const char *key, const size_t nkey, const uint32_t hv) {
             was_found++;
         }
     }
-
+    
+    __transaction_atomic{ //heiner
     if (it != NULL) {
         // [branch 006] Use an expression to access time
         if (settings.oldest_live != 0 && settings.oldest_live <= __transaction_atomic(tm_current_time) &&
@@ -670,6 +689,7 @@ item *do_item_get(const char *key, const size_t nkey, const uint32_t hv) {
             it->it_flags |= ITEM_FETCHED;
             DEBUG_REFCNT(it, '+');
         }
+    }
     }
 
     if (settings.verbose > 2)

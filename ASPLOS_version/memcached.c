@@ -224,7 +224,7 @@ char *tm_strncpy(char *dst, const char *src, size_t n)
 void *tm_realloc(void *ptr, size_t size, size_t old_size)
 {
     void *oldp = ptr;
-    void* newp = malloc(size);
+    void* newp = excitevm_smalloc(size);
     if (newp == NULL)
         return NULL;
     size_t copySize = *(size_t *)((char *)oldp - sizeof(size_t));
@@ -234,7 +234,9 @@ void *tm_realloc(void *ptr, size_t size, size_t old_size)
         tm_memcpy(newp, oldp, old_size);
         tm_memset(oldp, 0x0, old_size);
     }
-    free(oldp);
+//assert(0);
+    if (oldp)
+        excitevm_sfree(oldp);
     return newp;
 }
 
@@ -260,7 +262,7 @@ int tm_isspace(int c)
 __attribute__((transaction_pure))
 static void *pure_memcpy(void *dest, const void *src, size_t n)
 {
-    return tm_memcpy(dest, src, n);
+    return memcpy(dest, src, n);
 }
 
 // [branch 009b] Provide a safe strncpy function that copies its argument to
@@ -540,6 +542,14 @@ static void stats_init(void) {
        values are now false in boolean context... */
     process_started = time(0) - 2;
     stats_prefix_init();
+
+char *method = getenv("ITM_DEFAULT_METHOD");
+if (method && strncmp(method, "svm", 3) == 0) {
+  printf("svm\n");
+} else {
+  printf("old impl\n");
+}
+
 }
 
 static void stats_reset(void) {
@@ -1177,8 +1187,8 @@ static void out_string(conn *c, const char *str) {
         len = strlen(str);
     }
 
-    tm_memcpy(c->wbuf, str, len);
-    tm_memcpy(c->wbuf + len, "\r\n", 2);
+    memcpy(c->wbuf, str, len);
+    memcpy(c->wbuf + len, "\r\n", 2);
     c->wbytes = len + 2;
     c->wcurr = c->wbuf;
 
@@ -1500,11 +1510,17 @@ static void complete_update_bin(conn *c) {
     c->thread->stats.slab_stats[it->slabs_clsid].set_cmds++;
     }
 
+__transaction_atomic { //assaf
     /* We don't actually receive the trailing two characters in the bin
      * protocol, so we're going to just set them here */
     *(ITEM_data(it) + it->nbytes - 2) = '\r';
     *(ITEM_data(it) + it->nbytes - 1) = '\n';
 
+    /*
+    if((it->it_flags & (ITEM_LINKED|ITEM_SLABBED)) != 0){
+        printf("complite update bin\n");
+    }*/
+ }
     ret = store_item(it, c->cmd, c);
 
 #ifdef ENABLE_DTRACE
@@ -1583,15 +1599,18 @@ static void process_bin_touch(conn *c) {
     if (it) {
         /* the length has two unnecessary bytes ("\r\n") */
         uint16_t keylen = 0;
-        uint32_t bodylen = sizeof(rsp->message.body) + (it->nbytes - 2);
-
+        uint32_t bodylen;
+        
+        __transaction_atomic{ //heiner
+        bodylen = sizeof(rsp->message.body) + (it->nbytes - 2);
+        }
         item_update(it);
         // [branch 010] Replace per-thread stats lock with atomic transaction
         __transaction_atomic {
         c->thread->stats.touch_cmds++;
         c->thread->stats.slab_stats[it->slabs_clsid].touch_hits++;
-        }
-
+        //}
+        
         MEMCACHED_COMMAND_TOUCH(c->sfd, ITEM_key(it), it->nkey,
                                 it->nbytes, ITEM_get_cas(it));
 
@@ -1601,7 +1620,7 @@ static void process_bin_touch(conn *c) {
             bodylen += nkey;
             keylen = nkey;
         }
-
+        }//heiner
         add_bin_header(c, 0, sizeof(rsp->message.body), keylen, bodylen);
         rsp->message.header.response.cas = htonll(ITEM_get_cas(it));
 
@@ -1615,7 +1634,11 @@ static void process_bin_touch(conn *c) {
 
         /* Add the data minus the CRLF */
         if (c->cmd != PROTOCOL_BINARY_CMD_TOUCH) {
-            add_iov(c, ITEM_data(it), it->nbytes - 2);
+            int nbytes;
+            __transaction_atomic{
+                nbytes = it->nbytes;
+            }
+            add_iov(c, ITEM_data(it), nbytes - 2);
         }
 
         conn_set_state(c, conn_mwrite);
@@ -1638,7 +1661,7 @@ static void process_bin_touch(conn *c) {
                 char *ofs = c->wbuf + sizeof(protocol_binary_response_header);
                 add_bin_header(c, PROTOCOL_BINARY_RESPONSE_KEY_ENOENT,
                         0, nkey, nkey);
-                tm_memcpy(ofs, key, nkey);
+                memcpy(ofs, key, nkey);
                 add_iov(c, ofs, nkey);
                 conn_set_state(c, conn_mwrite);
                 c->write_and_go = conn_new_cmd;
@@ -1701,7 +1724,12 @@ static void process_bin_get(conn *c) {
         }
 
         /* Add the data minus the CRLF */
-        add_iov(c, ITEM_data(it), it->nbytes - 2);
+        int nbytes;
+        __transaction_atomic{
+            nbytes = it->nbytes;
+        }
+            add_iov(c, ITEM_data(it), nbytes - 2);
+        
         conn_set_state(c, conn_mwrite);
         c->write_and_go = conn_new_cmd;
         /* Remember this command so we can garbage collect it later */
@@ -1722,7 +1750,7 @@ static void process_bin_get(conn *c) {
                 char *ofs = c->wbuf + sizeof(protocol_binary_response_header);
                 add_bin_header(c, PROTOCOL_BINARY_RESPONSE_KEY_ENOENT,
                         0, nkey, nkey);
-                tm_memcpy(ofs, key, nkey);
+                memcpy(ofs, key, nkey);
                 add_iov(c, ofs, nkey);
                 conn_set_state(c, conn_mwrite);
                 c->write_and_go = conn_new_cmd;
@@ -2153,7 +2181,7 @@ static void process_bin_complete_sasl_auth(conn *c) {
     int vlen = c->binary_header.request.bodylen - nkey;
 
     char mech[nkey+1];
-    tm_memcpy(mech, ITEM_key((item*)c->item), nkey);
+    memcpy(mech, ITEM_key((item*)c->item), nkey);
     mech[nkey] = 0x00;
 
     if (settings.verbose)
@@ -5418,6 +5446,17 @@ static bool sanitycheck(void) {
 }
 
 int main (int argc, char **argv) {
+    excitevm_init();
+    excitevm_enter();
+    init_item_globals();
+
+    char a[] = "abb";
+    char b[3];
+    __transaction_atomic {
+        tm_memcpy(&b,a,3);
+    }
+    printf("%c\n", b[0]);
+
     int c;
     bool lock_memory = false;
     bool do_daemonize = false;
@@ -5966,4 +6005,8 @@ int main (int argc, char **argv) {
       free(u_socket);
 
     return retval;
+}
+
+void inTransaction(void){
+    assert(_ITM_inTransaction() != outsideTransaction);
 }

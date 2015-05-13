@@ -206,7 +206,7 @@ static CQ_ITEM *cqi_new(void) {
         int i;
 
         /* Allocate a bunch of items at once to reduce fragmentation */
-        item = malloc(sizeof(CQ_ITEM) * ITEMS_PER_ALLOC);
+        item = excitevm_smalloc(sizeof(CQ_ITEM) * ITEMS_PER_ALLOC);
         if (NULL == item)
             return NULL;
 
@@ -307,6 +307,7 @@ static void setup_thread(LIBEVENT_THREAD *me) {
  * Worker thread: main event loop
  */
 static void *worker_libevent(void *arg) {
+    excitevm_enter();
     LIBEVENT_THREAD *me = arg;
 
     /* Any per-thread setup can happen here; thread_init() will block until
@@ -490,7 +491,12 @@ void item_remove(item *item) {
  * it to be thread-safe.
  */
 int item_replace(item *old_it, item *new_it, const uint32_t hv) {
-    return do_item_replace(old_it, new_it, hv);
+  //heiner return do_item_replace(old_it, new_it, hv);  
+  int ret;
+  __transaction_atomic{
+    ret =  do_item_replace(old_it, new_it, hv);
+  }
+  return ret;
 }
 
 /*

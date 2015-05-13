@@ -26,6 +26,21 @@
 // [branch 012] Include errno, so we can access it in our new perror code
 #include <errno.h>
 
+//#include "/memcached/sitevm_dune1/excitevm/excitevm_c.h"
+
+#define USE_REGULAR_MALLOC
+
+#ifdef USE_REGULAR_MALLOC
+#define excitevm_smalloc(X) malloc(X)
+#define excitevm_srealloc(X,Y) realloc(X,Y)
+#define excitevm_scalloc(X,Y) calloc(X,Y)
+#define excitevm_sfree(X) free(X)
+#define excitevm_init()
+#define excitevm_enter()
+#else
+#include "excitevm/excitevm_c.h"
+#endif
+
 // [branch 008] Support for safe assertions.  Note that the evaluation of the
 // expression occurs within the context of the transaction, but we don't
 // commit before we call the safe_assert_internal code.
@@ -713,6 +728,10 @@ int tm_snprintf_s_llu_llu_llu_llu(char *str, size_t size, const char *format,
 // [branch 011b] This one is just for the b branch
 __attribute__((transaction_pure))
 int tm_snprintf_d_d(char *str, size_t size, const char *format, int val1, int val2);
+
+__attribute__ ((transaction_pure))
+void inTransaction (void);
+
 
 enum store_item_type store_item(item *item, int comm, conn *c);
 

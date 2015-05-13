@@ -1,4 +1,7 @@
 /* See items.c */
+//heiner init function for globals->heap
+void init_item_globals(void);
+
 // [branch 004] This function is called from a relaxed transaction
 // [branch 005] This function is actually transaction safe
 __attribute__((transaction_safe))
