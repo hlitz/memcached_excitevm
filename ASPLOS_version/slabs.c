@@ -24,6 +24,9 @@
 // [branch 010] Switching from condvars to semaphores...
 #include <semaphore.h>
 
+//#define excitevm_smalloc(X) malloc(X)
+//#define excitevm_sfree(X) free(X)
+
 /* powers-of-N allocation structures */
 
 typedef struct {
@@ -42,14 +45,20 @@ typedef struct {
     size_t requested; /* The number of requested bytes */
 } slabclass_t;
 
-static slabclass_t slabclass[MAX_NUMBER_OF_SLAB_CLASSES];
-static size_t mem_limit = 0;
-static size_t mem_malloced = 0;
-static int power_largest;
+static slabclass_t *slabclass;//heiner global->pointer [MAX_NUMBER_OF_SLAB_CLASSES];
+//static size_t mem_limit = 0; //heiner turn into pointers
+//static size_t mem_malloced = 0;//heiner turn into pointers
+//static int power_largest;//heiner turn into pointers
+static size_t* mem_limit = NULL; //heiner turn into pointers
+static size_t* mem_malloced = NULL;//heiner turn into pointers
+static int* power_largest = NULL;//heiner turn into pointers
 
-static void *mem_base = NULL;
-static void *mem_current = NULL;
-static size_t mem_avail = 0;
+//static void *mem_base = NULL;
+//static void *mem_current = NULL;
+static void **mem_base = NULL;
+static void **mem_current = NULL;
+//static size_t mem_avail = 0;//heiner turn into pointers
+static size_t* mem_avail = NULL;//heiner turn into pointers
 
 /**
  * Access to the slab allocator is protected by this lock
@@ -145,7 +154,7 @@ unsigned int slabs_clsid(const size_t size) {
     if (size == 0)
         return 0;
     while (size > slabclass[res].size)
-        if (res++ == power_largest)     /* won't fit in the biggest slab */
+        if (res++ == *power_largest)     /* won't fit in the biggest slab */
             return 0;
     return res;
 }
@@ -157,22 +166,49 @@ unsigned int slabs_clsid(const size_t size) {
 void slabs_init(const size_t limit, const double factor, const bool prealloc) {
     int i = POWER_SMALLEST - 1;
     unsigned int size = sizeof(item) + settings.chunk_size;
+printf("END TX\n");    
+    slabclass = excitevm_smalloc(sizeof(slabclass_t)*MAX_NUMBER_OF_SLAB_CLASSES);//heiner
+    mem_limit = excitevm_smalloc(sizeof(size_t));
+    mem_malloced = excitevm_smalloc(sizeof(size_t));
+    power_largest = excitevm_smalloc(sizeof(int));
+    mem_avail = excitevm_smalloc(sizeof(size_t));
+    mem_base = excitevm_smalloc(sizeof(void*));
+    mem_current = excitevm_smalloc(sizeof(void*));
+    printf("==0000=-------- mem current addr %p\n", (void*)mem_current);
+printf("END TX\n");    
+    assert(slabclass);
+    assert(mem_limit);
+    assert(mem_malloced);
+    assert(power_largest);
+    assert(mem_avail);
+printf("END TX\n");    
+    //move this up here so its outside of TX
+    char *t_initial_malloc = getenv("T_MEMD_INITIAL_MALLOC");
+    size_t t_initial_malloc_atol = 0;
+    if(t_initial_malloc)
+        t_initial_malloc_atol = (size_t)atol(t_initial_malloc);
 
-    mem_limit = limit;
+
+    __transaction_atomic{ //heiner move init into TX
+
+    *mem_limit = limit;
 
     if (prealloc) {
         /* Allocate everything in a big chunk with malloc */
-        mem_base = malloc(mem_limit);
-        if (mem_base != NULL) {
-            mem_current = mem_base;
-            mem_avail = mem_limit;
+        *mem_base = excitevm_smalloc(*mem_limit);
+        if (*mem_base != NULL) {
+            *mem_current = *mem_base;
+            *mem_avail = *mem_limit;
         } else {
-            fprintf(stderr, "Warning: Failed to allocate requested memory in"
-                    " one large chunk.\nWill allocate in smaller chunks\n");
+            //heiner take out of TX
+            //fprintf(stderr, "Warning: Failed to allocate requested memory in"
+            //        " one large chunk.\nWill allocate in smaller chunks\n");
         }
     }
 
-    tm_memset(slabclass, 0, sizeof(slabclass));
+    //memset(slabclass, 0, sizeof(slabclass));
+    tm_memset(slabclass, 0, MAX_NUMBER_OF_SLAB_CLASSES*sizeof(slabclass));
+    
 
     while (++i < POWER_LARGEST && size <= settings.item_size_max / factor) {
         /* Make sure items are always n-byte aligned */
@@ -183,31 +219,35 @@ void slabs_init(const size_t limit, const double factor, const bool prealloc) {
         slabclass[i].perslab = settings.item_size_max / slabclass[i].size;
         size *= factor;
         if (settings.verbose > 1) {
-            fprintf(stderr, "slab class %3d: chunk size %9u perslab %7u\n",
-                    i, slabclass[i].size, slabclass[i].perslab);
+            //heiner take out of TX, we could purify but I am lazy
+            //            fprintf(stderr, "slab class %3d: chunk size %9u perslab %7u\n",
+            //      i, slabclass[i].size, slabclass[i].perslab);
         }
     }
 
-    power_largest = i;
-    slabclass[power_largest].size = settings.item_size_max;
-    slabclass[power_largest].perslab = 1;
+    *power_largest = i;
+    slabclass[*power_largest].size = settings.item_size_max;
+    slabclass[*power_largest].perslab = 1;
     if (settings.verbose > 1) {
-        fprintf(stderr, "slab class %3d: chunk size %9u perslab %7u\n",
-                i, slabclass[i].size, slabclass[i].perslab);
+        //heiner take out of TX, we could purify but I am lazy
+        //fprintf(stderr, "slab class %3d: chunk size %9u perslab %7u\n",
+        //      i, slabclass[i].size, slabclass[i].perslab);
     }
 
     /* for the test suite:  faking of how much we've already malloc'd */
     {
-        char *t_initial_malloc = getenv("T_MEMD_INITIAL_MALLOC");
+        //        char *t_initial_malloc = getenv("T_MEMD_INITIAL_MALLOC");
         if (t_initial_malloc) {
-            mem_malloced = (size_t)atol(t_initial_malloc);
+            *mem_malloced = t_initial_malloc_atol;
+            //*mem_malloced = (size_t)atol(t_initial_malloc);
         }
 
     }
-
+    }    
     if (prealloc) {
-        slabs_preallocate(power_largest);
+        slabs_preallocate(*power_largest);
     }
+
 }
 
 static void slabs_preallocate (const unsigned int maxslabs) {
@@ -223,10 +263,11 @@ static void slabs_preallocate (const unsigned int maxslabs) {
     for (i = POWER_SMALLEST; i <= POWER_LARGEST; i++) {
         if (++prealloc > maxslabs)
             return;
+        assert(0);
         if (do_slabs_newslab(i) == 0) {
             fprintf(stderr, "Error while preallocating slab memory!\n"
                 "If using -L or other prealloc options, max memory must be "
-                "at least %d megabytes.\n", power_largest);
+                "at least %d megabytes.\n", *power_largest);
             exit(1);
         }
     }
@@ -266,8 +307,7 @@ static int do_slabs_newslab(const unsigned int id) {
     int len = settings.slab_reassign ? settings.item_size_max
         : p->size * p->perslab;
     char *ptr;
-
-    if ((mem_limit && mem_malloced + len > mem_limit && p->slabs > 0) ||
+    if ((*mem_limit && *mem_malloced + len > *mem_limit && p->slabs > 0) ||
         (grow_slab_list(id) == 0) ||
         ((ptr = memory_allocate((size_t)len)) == 0)) {
 
@@ -279,7 +319,7 @@ static int do_slabs_newslab(const unsigned int id) {
     split_slab_page_into_freelist(ptr, id);
 
     p->slab_list[p->slabs++] = ptr;
-    mem_malloced += len;
+    *mem_malloced += len;
     MEMCACHED_SLABS_SLABCLASS_ALLOCATE(id);
 
     return 1;
@@ -293,18 +333,27 @@ static void *do_slabs_alloc(const size_t size, unsigned int id) {
     slabclass_t *p;
     void *ret = NULL;
     item *it = NULL;
-
-    if (id < POWER_SMALLEST || id > power_largest) {
+    //__transaction_atomic { //assaf
+    if (id < POWER_SMALLEST || id > *power_largest) {
         MEMCACHED_SLABS_ALLOCATE_FAILED(size, 0);
         return NULL;
     }
 
     p = &slabclass[id];
     // [branch 008] switch to safe assertions
-    tm_assert(p->sl_curr == 0 || ((item *)p->slots)->slabs_clsid == 0);
+    //if(!(p->sl_curr == 0 || ((item *)p->slots)->slabs_clsid == 0))
+    //printf("PPP %p\n", (void*)p->slots);
+    //  printf("---- assert %i sid %i \n",p->sl_curr, ((item *)p->slots)->slabs_clsid);
+    
+    //    tm_assert(p->sl_curr == 0);
+    //    tm_assert((item *)p->slots)->slabs_clsid == 0;
+
+    //    tm_assert(p->sl_curr == 0 || ((item *)p->slots)->slabs_clsid == 0);
+    //tm_assert(p->sl_curr == 0 || ((item *)p->slots)->slabs_clsid == 0);
 
     /* fail unless we have space at the end of a recently allocated page,
        we have something on our freelist, or we could allocate a new page */
+
     if (! (p->sl_curr != 0 || do_slabs_newslab(id) != 0)) {
         /* We don't have more memory available */
         ret = NULL;
@@ -316,30 +365,31 @@ static void *do_slabs_alloc(const size_t size, unsigned int id) {
         p->sl_curr--;
         ret = (void *)it;
     }
-
+//tm_assert(0);
     if (ret) {
         p->requested += size;
         MEMCACHED_SLABS_ALLOCATE(size, id, p->size, ret);
     } else {
         MEMCACHED_SLABS_ALLOCATE_FAILED(size, id);
     }
-
+    //}
     return ret;
 }
 
 static void do_slabs_free(void *ptr, const size_t size, unsigned int id) {
     slabclass_t *p;
     item *it;
-
+    
     // [branch 008] switch to safe assertions
     tm_assert(((item *)ptr)->slabs_clsid == 0);
-    tm_assert(id >= POWER_SMALLEST && id <= power_largest);
-    if (id < POWER_SMALLEST || id > power_largest)
+    tm_assert(id >= POWER_SMALLEST && id <= *power_largest);
+    if (id < POWER_SMALLEST || id > *power_largest)
         return;
 
     MEMCACHED_SLABS_FREE(size, id, ptr);
     p = &slabclass[id];
-
+    //printf("-----------------------------------slab to free %p \n", (void*)p);
+    //__transaction_atomic { //assaf - temp
     it = (item *)ptr;
     it->it_flags |= ITEM_SLABBED;
     it->prev = 0;
@@ -349,6 +399,7 @@ static void do_slabs_free(void *ptr, const size_t size, unsigned int id) {
 
     p->sl_curr++;
     p->requested -= size;
+    //}
     return;
 }
 
@@ -396,9 +447,9 @@ static void do_slabs_stats(ADD_STAT add_stats, void *c) {
     /* Get the per-thread stats which contain some interesting aggregates */
     struct thread_stats thread_stats;
     threadlocal_stats_aggregate(&thread_stats);
-
+__transaction_atomic { //assaf
     total = 0;
-    for(i = POWER_SMALLEST; i <= power_largest; i++) {
+    for(i = POWER_SMALLEST; i <= *power_largest; i++) {
         slabclass_t *p = &slabclass[i];
         if (p->slabs != 0) {
             uint32_t perslab, slabs;
@@ -445,20 +496,21 @@ static void do_slabs_stats(ADD_STAT add_stats, void *c) {
 
     // [branch 011] Use safe stats
     APPEND_STAT_D("active_slabs", "%d", total);
-    APPEND_STAT_LLU("total_malloced", "%llu", (unsigned long long)mem_malloced);
+    APPEND_STAT_LLU("total_malloced", "%llu", (unsigned long long)*mem_malloced);
     add_stats(NULL, 0, NULL, 0, c);
+}
 }
 
 static void *memory_allocate(size_t size) {
     void *ret;
-
-    if (mem_base == NULL) {
+__transaction_atomic { //assaf
+    if (*mem_base == NULL) {
         /* We are not using a preallocated large memory chunk */
-        ret = malloc(size);
+        ret = excitevm_smalloc(size); //assaf - check
     } else {
-        ret = mem_current;
+        ret = *mem_current;
 
-        if (size > mem_avail) {
+        if (size > *mem_avail) {
             return NULL;
         }
 
@@ -467,14 +519,15 @@ static void *memory_allocate(size_t size) {
             size += CHUNK_ALIGN_BYTES - (size % CHUNK_ALIGN_BYTES);
         }
 
-        mem_current = ((char*)mem_current) + size;
-        if (size < mem_avail) {
-            mem_avail -= size;
+        *mem_current = ((char*)*mem_current) + size;
+        //printf("mem current %p\n", *mem_current);
+        if (size < *mem_avail) {
+            *mem_avail -= size;
         } else {
-            mem_avail = 0;
+            *mem_avail = 0;
         }
     }
-
+}
     return ret;
 }
 
@@ -515,7 +568,7 @@ void slabs_adjust_mem_requested(unsigned int id, size_t old, size_t ntotal)
     // [branch 008] Safe tm_msg_and_die lets this become atomic
     __transaction_atomic {
     slabclass_t *p;
-    if (id < POWER_SMALLEST || id > power_largest) {
+    if (id < POWER_SMALLEST || id > *power_largest) {
         // [branch 008] Use safe way to kill program from within transaction
         tm_msg_and_die("Internal error! Invalid slab class\n");
     }
@@ -554,9 +607,9 @@ static int slab_rebalance_start(void) {
     //              a relaxed transaction
 
     if (slab_rebal.s_clsid < POWER_SMALLEST ||
-        slab_rebal.s_clsid > power_largest  ||
+        slab_rebal.s_clsid > *power_largest  ||
         slab_rebal.d_clsid < POWER_SMALLEST ||
-        slab_rebal.d_clsid > power_largest  ||
+        slab_rebal.d_clsid > *power_largest  ||
         slab_rebal.s_clsid == slab_rebal.d_clsid)
         no_go = -2;
 
@@ -612,7 +665,7 @@ static void srm_fprintf1(void *param)
     int* ip = (int*)param;
     fprintf(stderr, "Slab reassign hit a busy item: refcount: %d (%d -> %d)\n",
             ip[0], ip[1], ip[2]);
-    free(ip);
+     excitevm_sfree(ip);
 }
 
 /* refcount == 0 is safe since nobody can incr while cache_lock is held.
@@ -626,7 +679,7 @@ static int slab_rebalance_move(void) {
     int was_busy = 0;
     int refcount = 0;
     enum move_status status = MOVE_PASS;
-
+    printf("-------------rebalance\n");
     // [branch 002] Replaced cache_lock critical section with relaxed
     //              transaction
     // [branch 012] With oncommit, this becomes atomic
@@ -675,7 +728,7 @@ static int slab_rebalance_move(void) {
                         // [branch 012] This one was annoying... the fprintf
                         //              has 3 params, so we need to tuck them
                         //              away for later
-                        int* newdata = malloc(3*sizeof(int));
+                        int* newdata = excitevm_smalloc(3*sizeof(int));
                         newdata[0] = it->tm_refcount;
                         newdata[1] = slab_rebal.s_clsid;
                         newdata[2] = slab_rebal.d_clsid;
@@ -807,13 +860,13 @@ static int slab_automove_decision(int *src, int *dst) {
     //              transaction
     // [branch 005] This transaction can be atomic
     __transaction_atomic {
-    for (i = POWER_SMALLEST; i < power_largest; i++) {
+    for (i = POWER_SMALLEST; i < *power_largest; i++) {
         total_pages[i] = slabclass[i].slabs;
     }
     }
 
     /* Find a candidate source; something with zero evicts 3+ times */
-    for (i = POWER_SMALLEST; i < power_largest; i++) {
+    for (i = POWER_SMALLEST; i < *power_largest; i++) {
         evicted_diff = evicted_new[i] - evicted_old[i];
         if (evicted_diff == 0 && total_pages[i] > 2) {
             slab_zeroes[i]++;
@@ -852,6 +905,7 @@ static int slab_automove_decision(int *src, int *dst) {
  * go to sleep if locks are contended
  */
 static void *slab_maintenance_thread(void *arg) {
+excitevm_enter();
     int src, dest;
 
     // [branch 006] use a transaction expression to access a
@@ -876,6 +930,7 @@ static void *slab_maintenance_thread(void *arg) {
  * Sits waiting for a condition to jump off and shovel some memory about
  */
 static void *slab_rebalance_thread(void *arg) {
+    excitevm_enter();
     int was_busy = 0;
     /* So we first pass into cond_wait with the mutex held */
     // [branch 010] Replace mutex acquire with spin acquire of our new lock
@@ -932,10 +987,10 @@ static void *slab_rebalance_thread(void *arg) {
 __attribute__((transaction_safe))
 static int slabs_reassign_pick_any(int dst) {
     static int cur = POWER_SMALLEST - 1;
-    int tries = power_largest - POWER_SMALLEST + 1;
+    int tries = *power_largest - POWER_SMALLEST + 1;
     for (; tries > 0; tries--) {
         cur++;
-        if (cur > power_largest)
+        if (cur > *power_largest)
             cur = POWER_SMALLEST;
         if (cur == dst)
             continue;
@@ -970,16 +1025,17 @@ static enum reassign_result_type do_slabs_reassign(int src, int dst) {
         /* TODO: If we end up back at -1, return a new error type */
     }
 
-    if (src < POWER_SMALLEST || src > power_largest ||
-        dst < POWER_SMALLEST || dst > power_largest)
+    if (src < POWER_SMALLEST || src > *power_largest ||
+        dst < POWER_SMALLEST || dst > *power_largest)
         return REASSIGN_BADCLASS;
 
     if (slabclass[src].slabs < 2)
         return REASSIGN_NOSPARE;
 
+__transaction_atomic { //assaf
     slab_rebal.s_clsid = src;
     slab_rebal.d_clsid = dst;
-
+}
     // [branch 006] set this with a transaction
     __transaction_atomic { tm_slab_rebalance_signal = 1; }
     // [branch 010] Switch from condvar signal to sem post
@@ -1046,6 +1102,7 @@ int start_slab_maintenance_thread(void) {
 }
 
 void stop_slab_maintenance_thread(void) {
+    excitevm_enter();
     // [branch 002] Replaced cache_lock critical section with relaxed
     //              transaction
     // [branch 010] Without maintenance_cond, this becomes atomic

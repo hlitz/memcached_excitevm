@@ -77,7 +77,7 @@ void assoc_init(const int hashtable_init) {
     if (hashtable_init) {
         hashpower = hashtable_init;
     }
-    primary_hashtable = calloc(hashsize(hashpower), sizeof(void *));
+    primary_hashtable = excitevm_scalloc(hashsize(hashpower), sizeof(void *));
     if (! primary_hashtable) {
         fprintf(stderr, "Failed to init hashtable.\n");
         exit(EXIT_FAILURE);
@@ -155,7 +155,7 @@ __attribute__((transaction_safe))
 static void assoc_expand(void) {
     old_hashtable = primary_hashtable;
 
-    primary_hashtable = calloc(hashsize(hashpower + 1), sizeof(void *));
+    primary_hashtable = excitevm_scalloc(hashsize(hashpower + 1), sizeof(void *));
     if (primary_hashtable) {
         if (settings.verbose > 1)
             // [branch 012] Replace fprintf with oncommit
@@ -254,6 +254,7 @@ static void amt_fprintf1(void *param)
 
 static void *assoc_maintenance_thread(void *arg) {
 
+    excitevm_enter();
     // [branch 006] use a transaction expression to access a
     //              formerly-volatile variable
     while (__transaction_atomic(tm_do_run_maintenance_thread)) {
@@ -284,7 +285,7 @@ static void *assoc_maintenance_thread(void *arg) {
             expand_bucket++;
             if (expand_bucket == hashsize(hashpower - 1)) {
                 expanding = false;
-                free(old_hashtable);
+                excitevm_sfree(old_hashtable);
                 // [branch 002] elide STATS_LOCK since we're in a relaxed
                 //              transaction
                 stats.hash_bytes -= hashsize(hashpower - 1) * sizeof(void *);
