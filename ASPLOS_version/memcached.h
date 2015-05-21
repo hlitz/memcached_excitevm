@@ -28,7 +28,7 @@
 
 //#include "/memcached/sitevm_dune1/excitevm/excitevm_c.h"
 
-#define USE_REGULAR_MALLOC
+//#define USE_REGULAR_MALLOC
 
 #ifdef USE_REGULAR_MALLOC
 #define excitevm_smalloc(X) malloc(X)

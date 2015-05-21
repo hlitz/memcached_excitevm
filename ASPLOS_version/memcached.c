@@ -47,6 +47,8 @@
 #include <sysexits.h>
 #include <stddef.h>
 
+//#define __transaction_atomic{ printf("where to exec tm %lx\n",(uint64_t)__builtin_return_address(1)); __transaction_atomic{
+
 // [branch 012] Include support for registering onCommit handlers:
 //#include "/home/spear/gcc/src/gcc_trunk/libitm/libitm.h"
 #include "/home/hlitz/tm-persistence/min-gcc/libitm/libitm.h"
@@ -224,7 +226,11 @@ char *tm_strncpy(char *dst, const char *src, size_t n)
 void *tm_realloc(void *ptr, size_t size, size_t old_size)
 {
     void *oldp = ptr;
-    void* newp = excitevm_smalloc(size);
+    tm_assert((((unsigned long)oldp)>0x30000000000));
+    void* newp;
+    __transaction_atomic{
+        newp = excitevm_smalloc(size);
+    }
     if (newp == NULL)
         return NULL;
     size_t copySize = *(size_t *)((char *)oldp - sizeof(size_t));
@@ -2522,9 +2528,9 @@ static void process_bin_update(conn *c) {
         c->write_and_go = conn_swallow;
         return;
     }
-
+    __transaction_atomic{
     ITEM_set_cas(it, c->binary_header.request.cas);
-
+    }
     switch (c->cmd) {
         case PROTOCOL_BINARY_CMD_ADD:
             c->cmd = NREAD_ADD;
@@ -2538,13 +2544,15 @@ static void process_bin_update(conn *c) {
         default:
             assert(0);
     }
-
+    __transaction_atomic{
     if (ITEM_get_cas(it) != 0) {
         c->cmd = NREAD_CAS;
     }
-
+    }
     c->item = it;
+    __transaction_atomic{
     c->ritem = ITEM_data(it);
+    }
     c->rlbytes = vlen;
     conn_set_state(c, conn_nread);
     c->substate = bin_read_set_value;
@@ -2830,9 +2838,9 @@ enum store_item_type do_store_item(item *it, int comm, conn *c, const uint32_t h
 
                 // [branch 009b] Switch to safe strtol
                 flags = (int) tm_strtol(ITEM_suffix(old_it), (char **) NULL, 10);
-
+                excitevm_TMprintf();
                 new_it = do_item_alloc(key, it->nkey, flags, old_it->exptime, it->nbytes + old_it->nbytes - 2 /* CRLF */, hv);
-
+                excitevm_TMprintf();
                 if (new_it == NULL) {
                     /* SERVER_ERROR out of memory */
                     if (old_it != NULL)
@@ -3824,7 +3832,9 @@ enum delta_result_type do_add_delta(conn *c, const char *key, const size_t nkey,
     if (res + 2 > it->nbytes || __transaction_atomic(it->tm_refcount) != 1) { /* need to realloc */
         item *new_it;
         // [branch 009b] Switch to safe atoi
+        excitevm_TMprintf();
         new_it = do_item_alloc(ITEM_key(it), it->nkey, tm_atoi(ITEM_suffix(it) + 1), it->exptime, res + 2, hv);
+        excitevm_TMprintf();
         if (new_it == 0) {
             do_item_remove(it);
             return EOM;
@@ -4490,7 +4500,6 @@ static void drive_machine(conn *c) {
     assert(c != NULL);
 
     while (!stop) {
-
         switch(c->state) {
         case conn_listening:
             addrlen = sizeof(addr);
@@ -5902,7 +5911,6 @@ int main (int argc, char **argv) {
     }
     /* start up worker threads if MT mode */
     thread_init(settings.num_threads, main_base);
-
     if (start_assoc_maintenance_thread() == -1) {
         exit(EXIT_FAILURE);
     }
@@ -5990,7 +5998,6 @@ int main (int argc, char **argv) {
     if (event_base_loop(main_base, 0) != 0) {
         retval = EXIT_FAILURE;
     }
-
     stop_assoc_maintenance_thread();
 
     /* remove the PID file if we're a daemon */

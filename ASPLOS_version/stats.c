@@ -50,8 +50,8 @@ void stats_prefix_clear() {
         PREFIX_STATS *cur, *next;
         for (cur = prefix_stats[i]; cur != NULL; cur = next) {
             next = cur->next;
-            free(cur->prefix);
-            free(cur);
+             excitevm_sfree(cur->prefix);
+             excitevm_sfree(cur);
         }
         prefix_stats[i] = NULL;
     }
@@ -105,19 +105,21 @@ static PREFIX_STATS *stats_prefix_find(const char *key, const size_t nkey) {
         if (tm_strncmp(pfs->prefix, key, length) == 0)
             return pfs;
     }
-
-    pfs = calloc(sizeof(PREFIX_STATS), 1);
+    __transaction_atomic{
+    pfs =  excitevm_scalloc(sizeof(PREFIX_STATS), 1);
+    }
     if (NULL == pfs) {
         // [branch 012] move perror to oncommit
         registerOnCommitHandler(spf_perror1, (void*)(uintptr_t)errno);
         return NULL;
     }
-
-    pfs->prefix = malloc(length + 1);
+    __transaction_atomic{
+    pfs->prefix = excitevm_smalloc(length + 1);
+    }
     if (NULL == pfs->prefix) {
         // [branch 012] move perror to oncommit
         registerOnCommitHandler(spf_perror2, (void*)(uintptr_t)errno);
-        free(pfs);
+         excitevm_sfree(pfs);
         return NULL;
     }
 
@@ -217,7 +219,9 @@ char *stats_prefix_dump(int *length) {
            num_prefixes * (tm_strlen(format) - 2 /* %s */
                            + 4 * (20 - 4)) /* %llu replaced by 20-digit num */
                            + sizeof("END\r\n");
-    buf = malloc(size);
+    __transaction_atomic{
+        buf = excitevm_smalloc(size);
+    }
     if (NULL == buf) {
         // [branch 012] Move perror to oncommit handler
         registerOnCommitHandler(spd_perror1, (void*)(uintptr_t)errno);

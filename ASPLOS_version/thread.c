@@ -84,20 +84,25 @@ static void thread_libevent_process(int fd, short which, void *arg);
 // results in a transaction_safe annotation
 unsigned short tm_refcount_incr(unsigned short *refcount) {
     // [branch 007] Note: we are assuming a TM compiler, dropping all #ifdefs
+    unsigned short temp;
     __transaction_atomic {
         (*refcount)++;
-        return *refcount;
+        temp = *refcount;
     }
+    return temp;
+
 }
 
 // [branch 007] Renamed this function, and made it use a transaction... this
 // results in a transaction_safe annotation
 unsigned short tm_refcount_decr(unsigned short *refcount) {
     // [branch 007] Note: we are assuming a TM compiler, dropping all #ifdefs
+    unsigned short temp;
     __transaction_atomic {
         (*refcount)--;
-        return *refcount;
+        temp = *refcount;
     }
+    return temp;
 }
 
 // [branch 003b] Removed all item_lock-related functions
@@ -206,7 +211,9 @@ static CQ_ITEM *cqi_new(void) {
         int i;
 
         /* Allocate a bunch of items at once to reduce fragmentation */
-        item = excitevm_smalloc(sizeof(CQ_ITEM) * ITEMS_PER_ALLOC);
+        //__transaction_atomic{
+        item = /*excitevm_s*/malloc(sizeof(CQ_ITEM) * ITEMS_PER_ALLOC);
+            //}
         if (NULL == item)
             return NULL;
 
@@ -423,7 +430,7 @@ int is_listen_thread() {
  * Allocates a new item.
  */
 item *item_alloc(char *key, size_t nkey, int flags, rel_time_t exptime, int nbytes) {
-    item *it;
+    item *it = NULL;
     /* do_item_alloc handles its own locks */
     it = do_item_alloc(key, nkey, flags, exptime, nbytes, 0);
     return it;

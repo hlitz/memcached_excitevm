@@ -40,7 +40,7 @@ typedef  unsigned long  int  ub4;   /* unsigned 4-byte quantities */
 typedef  unsigned       char ub1;   /* unsigned 1-byte quantities */
 
 /* how many powers of 2's worth of buckets we use */
-unsigned int hashpower = HASHPOWER_DEFAULT;
+//unsigned int hashpower = HASHPOWER_DEFAULT;
 
 #define hashsize(n) ((ub4)1<<(n))
 #define hashmask(n) (hashsize(n)-1)
@@ -55,29 +55,64 @@ static item** primary_hashtable = 0;
 static item** old_hashtable = 0;
 
 /* Number of items in the hash table. */
-static unsigned int hash_items = 0;
+//static unsigned int hash_items = 0;
 
 /* Flag: Are we in the middle of expanding now? */
-static bool expanding = false;
-static bool started_expanding = false;
+//static bool expanding = false;
+//static bool started_expanding = false;
 
 /*
  * During expansion we migrate values with bucket granularity; this is how
  * far we've gotten so far. Ranges from 0 .. hashsize(hashpower - 1) - 1.
  */
-static unsigned int expand_bucket = 0;
+//static unsigned int expand_bucket = 0;
+
+//put these vars on excitevm mem
+unsigned int *hashpower;
+
+/* Number of items in the hash table. */
+static unsigned int* hash_items = 0;
+
+/* Flag: Are we in the middle of expanding now? */
+static bool* expanding = false;
+static bool* started_expanding = false;
+
+/*
+ * During expansion we migrate values with bucket granularity; this is how
+ * far we've gotten so far. Ranges from 0 .. hashsize(hashpower - 1) - 1.
+ */
+static unsigned int* expand_bucket = 0;
 
 void assoc_init(const int hashtable_init) {
+    //heiner
+    __transaction_atomic{
+        hashpower = excitevm_smalloc(sizeof(unsigned int*));
+        hash_items = excitevm_smalloc(sizeof(unsigned int*));
+        expanding = excitevm_smalloc(sizeof(bool*));
+        started_expanding = excitevm_smalloc(sizeof(bool*));
+        expand_bucket = excitevm_smalloc(sizeof(unsigned int*));
+     
+
+        //__transaction_atomic{
+        *hashpower = HASHPOWER_DEFAULT;
+        *hash_items = 0;
+        *expanding = false;
+        *started_expanding = false;
+        *expand_bucket = 0;
+    }
+
     // [branch 001] Initialize the semaphore.
     //
     // NB: we checked, and this is called early enough that the semaphore
     // will be initialized before worker threads are created.
     early_sem_init();
+    __transaction_atomic { //heiner to make calloc/zeroing work? needed?
 
     if (hashtable_init) {
-        hashpower = hashtable_init;
+        *hashpower = hashtable_init;
     }
-    primary_hashtable = excitevm_scalloc(hashsize(hashpower), sizeof(void *));
+    primary_hashtable = excitevm_scalloc(hashsize(*hashpower), sizeof(void*));
+    }
     if (! primary_hashtable) {
         fprintf(stderr, "Failed to init hashtable.\n");
         exit(EXIT_FAILURE);
@@ -85,8 +120,8 @@ void assoc_init(const int hashtable_init) {
     // [branch 002] Replaced STATS_LOCK with relaxed transaction
     // [branch 005] This transaction can be atomic
     __transaction_atomic {
-    stats.hash_power_level = hashpower;
-    stats.hash_bytes = hashsize(hashpower) * sizeof(void *);
+    stats.hash_power_level = *hashpower;
+    stats.hash_bytes = hashsize(*hashpower) * sizeof(void *);
     }
 }
 
@@ -94,12 +129,12 @@ item *assoc_find(const char *key, const size_t nkey, const uint32_t hv) {
     item *it;
     unsigned int oldbucket;
 
-    if (expanding &&
-        (oldbucket = (hv & hashmask(hashpower - 1))) >= expand_bucket)
+    if (*expanding &&
+        (oldbucket = (hv & hashmask(*hashpower - 1))) >= *expand_bucket)
     {
         it = old_hashtable[oldbucket];
     } else {
-        it = primary_hashtable[hv & hashmask(hashpower)];
+        it = primary_hashtable[hv & hashmask(*hashpower)];
     }
 
     item *ret = NULL;
@@ -127,12 +162,12 @@ static item** _hashitem_before (const char *key, const size_t nkey, const uint32
     item **pos;
     unsigned int oldbucket;
 
-    if (expanding &&
-        (oldbucket = (hv & hashmask(hashpower - 1))) >= expand_bucket)
+    if (*expanding &&
+        (oldbucket = (hv & hashmask(*hashpower - 1))) >= *expand_bucket)
     {
         pos = &old_hashtable[oldbucket];
     } else {
-        pos = &primary_hashtable[hv & hashmask(hashpower)];
+        pos = &primary_hashtable[hv & hashmask(*hashpower)];
     }
 
     // [branch 009] Switch to safe memcmp
@@ -155,19 +190,19 @@ __attribute__((transaction_safe))
 static void assoc_expand(void) {
     old_hashtable = primary_hashtable;
 
-    primary_hashtable = excitevm_scalloc(hashsize(hashpower + 1), sizeof(void *));
+    primary_hashtable = excitevm_scalloc(hashsize(*hashpower + 1), sizeof(void *));
     if (primary_hashtable) {
         if (settings.verbose > 1)
             // [branch 012] Replace fprintf with oncommit
             registerOnCommitHandler(ae_fprintf1, NULL);
-        hashpower++;
-        expanding = true;
-        expand_bucket = 0;
+        (*hashpower)++;
+        *expanding = true;
+        *expand_bucket = 0;
         // [branch 002] Replaced STATS_LOCK with relaxed transaction
         // [branch 005] This transaction can be atomic
         __transaction_atomic {
-        stats.hash_power_level = hashpower;
-        stats.hash_bytes += hashsize(hashpower) * sizeof(void *);
+        stats.hash_power_level = *hashpower;
+        stats.hash_bytes += hashsize(*hashpower) * sizeof(void *);
         stats.hash_is_expanding = 1;
         }
     } else {
@@ -186,9 +221,9 @@ static void ase_sempost1(void *param)
 // [branch 012] With oncommit, this becomes safe
 __attribute__((transaction_safe))
 static void assoc_start_expand(void) {
-    if (started_expanding)
+    if (*started_expanding)
         return;
-    started_expanding = true;
+    *started_expanding = true;
     // [branch 001] rather than signal on a condvar, we post on a semaphore
     // [branch 012] move sempost to oncommit
     registerOnCommitHandler(ase_sempost1, NULL);
@@ -200,35 +235,34 @@ int assoc_insert(item *it, const uint32_t hv) {
 
 //    assert(assoc_find(ITEM_key(it), it->nkey) == 0);  /* shouldn't have duplicately named things defined */
 
-    if (expanding &&
-        (oldbucket = (hv & hashmask(hashpower - 1))) >= expand_bucket)
+    if (*expanding &&
+        (oldbucket = (hv & hashmask(*hashpower - 1))) >= *expand_bucket)
     {
         it->h_next = old_hashtable[oldbucket];
         old_hashtable[oldbucket] = it;
     } else {
-        it->h_next = primary_hashtable[hv & hashmask(hashpower)];
-        primary_hashtable[hv & hashmask(hashpower)] = it;
+        it->h_next = primary_hashtable[hv & hashmask(*hashpower)];
+        primary_hashtable[hv & hashmask(*hashpower)] = it;
     }
 
-    hash_items++;
-    if (! expanding && hash_items > (hashsize(hashpower) * 3) / 2) {
+    (*hash_items)++;
+    if (! *expanding && *hash_items > (hashsize(*hashpower) * 3) / 2) {
         assoc_start_expand();
     }
 
-    MEMCACHED_ASSOC_INSERT(ITEM_key(it), it->nkey, hash_items);
+    MEMCACHED_ASSOC_INSERT(ITEM_key(it), it->nkey, *hash_items);
     return 1;
 }
 
 void assoc_delete(const char *key, const size_t nkey, const uint32_t hv) {
     item **before = _hashitem_before(key, nkey, hv);
-
     if (*before) {
         item *nxt;
-        hash_items--;
+        (*hash_items)--;
         /* The DTrace probe cannot be triggered as the last instruction
          * due to possible tail-optimization by the compiler
          */
-        MEMCACHED_ASSOC_DELETE(key, nkey, hash_items);
+        MEMCACHED_ASSOC_DELETE(key, nkey, *hash_items);
         nxt = (*before)->h_next;
         (*before)->h_next = 0;   /* probably pointless, but whatever. */
         *before = nxt;
@@ -268,27 +302,27 @@ static void *assoc_maintenance_thread(void *arg) {
         // [branch 012] With oncommit, this becomes atomic
         __transaction_atomic {
 
-        for (ii = 0; ii < hash_bulk_move && expanding; ++ii) {
+        for (ii = 0; ii < hash_bulk_move && *expanding; ++ii) {
             item *it, *next;
             int bucket;
 
-            for (it = old_hashtable[expand_bucket]; NULL != it; it = next) {
+            for (it = old_hashtable[*expand_bucket]; NULL != it; it = next) {
                 next = it->h_next;
 
-                bucket = hash(ITEM_key(it), it->nkey, 0) & hashmask(hashpower);
+                bucket = hash(ITEM_key(it), it->nkey, 0) & hashmask(*hashpower);
                 it->h_next = primary_hashtable[bucket];
                 primary_hashtable[bucket] = it;
             }
 
-            old_hashtable[expand_bucket] = NULL;
+            old_hashtable[*expand_bucket] = NULL;
 
-            expand_bucket++;
-            if (expand_bucket == hashsize(hashpower - 1)) {
-                expanding = false;
+            (*expand_bucket)++;
+            if (*expand_bucket == hashsize(*hashpower - 1)) {
+                *expanding = false;
                 excitevm_sfree(old_hashtable);
                 // [branch 002] elide STATS_LOCK since we're in a relaxed
                 //              transaction
-                stats.hash_bytes -= hashsize(hashpower - 1) * sizeof(void *);
+                stats.hash_bytes -= hashsize(*hashpower - 1) * sizeof(void *);
                 stats.hash_is_expanding = 0;
                 if (settings.verbose > 1)
                     // [branch 012] Move fprintf to oncommit
@@ -298,7 +332,8 @@ static void *assoc_maintenance_thread(void *arg) {
 
         }
 
-        if (!expanding) {
+        //        if (!*expanding) {
+        if (!__transaction_atomic(*expanding)) {
             /* finished expanding. tell all threads to use fine-grained locks */
             switch_item_lock_type(ITEM_LOCK_GRANULAR);
             slabs_rebalancer_resume();
@@ -307,7 +342,7 @@ static void *assoc_maintenance_thread(void *arg) {
             //              relaxed transaction
             // [branch 005] This transaction can be atomic
             __transaction_atomic {
-            started_expanding = false;
+            *started_expanding = false;
             // [branch 001] instead of waiting on a condvar, then unlocking,
             //              we can unlock, then wait on a semaphore
             }
@@ -319,8 +354,9 @@ static void *assoc_maintenance_thread(void *arg) {
             //              relaxed transaction
             // [branch 012] This becomes atomic once assoc_expand fprintf is
             //              oncommit
+            printf("ASSOC EXPAND\n");
             __transaction_atomic {
-            assoc_expand();
+                assoc_expand();
             }
         }
     }

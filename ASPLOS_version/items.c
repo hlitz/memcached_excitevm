@@ -54,10 +54,12 @@ static itemstats_t* itemstats;
 static unsigned int* sizes;
 
 void init_item_globals(void){
+    __transaction_atomic{
     heads = (item**)excitevm_smalloc(sizeof(item*)*LARGEST_ID);
     tails = (item**)excitevm_smalloc(sizeof(item*)*LARGEST_ID);
     itemstats = (itemstats_t*)excitevm_smalloc(sizeof(itemstats_t)*LARGEST_ID);
     sizes =(unsigned int*)excitevm_smalloc(sizeof(unsigned int*)*LARGEST_ID);
+    }
 }
 
 void item_stats_reset(void) {
@@ -145,6 +147,7 @@ item *do_item_alloc(char *key, const size_t nkey, const int flags,
      * Waste of CPU for almost all deployments */
     for (; tries > 0 && search != NULL; tries--, search=search->prev) {
         uint32_t hv = hash(ITEM_key(search), search->nkey, 0);
+        //excitevm_TMprintf();
         /* Attempt to hash item lock the "search" item. If locked, no
          * other callers can incr the refcount
          */
@@ -170,7 +173,6 @@ item *do_item_alloc(char *key, const size_t nkey, const int flags,
             // [branch 003b] No item_lock to release
             continue;
         }
-
         /* Expired or flushed */
         // [branch 006] Use an expression to access time
         if ((search->exptime != 0 && search->exptime < __transaction_atomic(tm_current_time))
@@ -214,7 +216,6 @@ item *do_item_alloc(char *key, const size_t nkey, const int flags,
                     slabs_reassign(-1, id);
             }
         }
-
         // [branch 007] use new tm refcounts
         tm_refcount_decr(&search->tm_refcount);
         /* If hash values were equal, we don't grab a second lock */
@@ -222,13 +223,15 @@ item *do_item_alloc(char *key, const size_t nkey, const int flags,
         break;
     }
 
-    if (!tried_alloc && (tries == 0 || search == NULL))
-        it = slabs_alloc(ntotal, id);
+        if (!tried_alloc && (tries == 0 || search == NULL)){
+            it = slabs_alloc(ntotal, id);
+        }
 
     if (it == NULL) {
         itemstats[id].outofmemory++;
         return NULL;
     }
+    
 
     // [branch 008] Switch to safe assertions
     tm_assert(it->slabs_clsid == 0);
@@ -239,9 +242,10 @@ item *do_item_alloc(char *key, const size_t nkey, const int flags,
      */
     // [branch 007] use new tm refcounts
     it->tm_refcount = 1;     /* the caller will have a reference */
-    }
+    //heiner do init in tx}
     it->next = it->prev = it->h_next = 0;
     it->slabs_clsid = id;
+        
 
     DEBUG_REFCNT(it, '*');
     it->it_flags = settings.use_cas ? ITEM_CAS : 0;
@@ -251,8 +255,11 @@ item *do_item_alloc(char *key, const size_t nkey, const int flags,
     tm_memcpy(ITEM_key(it), key, nkey);
     it->exptime = exptime;
     // [branch 009b] Use safe memcpy
+        
     tm_memcpy(ITEM_suffix(it), suffix, (size_t)nsuffix);
     it->nsuffix = nsuffix;
+    }
+
     return it;
 }
 
@@ -386,7 +393,7 @@ void do_item_unlink(item *it, const uint32_t hv) {
 /* FIXME: Is it necessary to keep this copy/pasted code? */
 void do_item_unlink_nolock(item *it, const uint32_t hv) {
     MEMCACHED_ITEM_UNLINK(ITEM_key(it), it->nkey, it->nbytes);
-    __transaction_atomic{ //need to do this in a transaction to make
+    //__transaction_atomic{ //need to do this in a transaction to make
         //writes visible for excite-vm
     if ((it->it_flags & ITEM_LINKED) != 0) {
         it->it_flags &= ~ITEM_LINKED;
@@ -396,11 +403,19 @@ void do_item_unlink_nolock(item *it, const uint32_t hv) {
         stats.curr_bytes -= ITEM_ntotal(it);
         stats.curr_items -= 1;
         }
+        
         assoc_delete(ITEM_key(it), it->nkey, hv);
+        
         item_unlink_q(it);
+        
         do_item_remove(it);
     }
-    }
+    //}
+}
+
+__attribute__((transaction_pure))
+void printfTMTM(char* p, void* ptr){
+    printf("%s ptr: %p\n", p, ptr);
 }
 
 void do_item_remove(item *it) {
@@ -458,8 +473,9 @@ char *do_item_cachedump(const unsigned int slabs_clsid, const unsigned int limit
 
     it = heads[slabs_clsid];
 
-    //__transaction_atomic { //assaf
+    __transaction_atomic { //heiner
     buffer = excitevm_smalloc((size_t)memlimit);
+    }
     if (buffer == 0) return NULL;
     bufcurr = 0;
 

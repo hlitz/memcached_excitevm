@@ -149,6 +149,7 @@ static void slabs_preallocate (const unsigned int maxslabs);
  */
 
 unsigned int slabs_clsid(const size_t size) {
+    __transaction_atomic{
     int res = POWER_SMALLEST;
 
     if (size == 0)
@@ -157,6 +158,7 @@ unsigned int slabs_clsid(const size_t size) {
         if (res++ == *power_largest)     /* won't fit in the biggest slab */
             return 0;
     return res;
+    }
 }
 
 /**
@@ -166,7 +168,7 @@ unsigned int slabs_clsid(const size_t size) {
 void slabs_init(const size_t limit, const double factor, const bool prealloc) {
     int i = POWER_SMALLEST - 1;
     unsigned int size = sizeof(item) + settings.chunk_size;
-printf("END TX\n");    
+    __transaction_atomic{
     slabclass = excitevm_smalloc(sizeof(slabclass_t)*MAX_NUMBER_OF_SLAB_CLASSES);//heiner
     mem_limit = excitevm_smalloc(sizeof(size_t));
     mem_malloced = excitevm_smalloc(sizeof(size_t));
@@ -174,14 +176,13 @@ printf("END TX\n");
     mem_avail = excitevm_smalloc(sizeof(size_t));
     mem_base = excitevm_smalloc(sizeof(void*));
     mem_current = excitevm_smalloc(sizeof(void*));
-    printf("==0000=-------- mem current addr %p\n", (void*)mem_current);
-printf("END TX\n");    
+    }
+    /*
     assert(slabclass);
     assert(mem_limit);
     assert(mem_malloced);
     assert(power_largest);
-    assert(mem_avail);
-printf("END TX\n");    
+    assert(mem_avail);*/
     //move this up here so its outside of TX
     char *t_initial_malloc = getenv("T_MEMD_INITIAL_MALLOC");
     size_t t_initial_malloc_atol = 0;
@@ -302,6 +303,11 @@ static void split_slab_page_into_freelist(char *ptr, const unsigned int id) {
     }
 }
 
+__attribute__((transaction_pure))
+void printfTM(void* i, void* ii, void* iii){
+    printf("printfTM %p %p %p\n", i, ii, iii);
+}
+
 static int do_slabs_newslab(const unsigned int id) {
     slabclass_t *p = &slabclass[id];
     int len = settings.slab_reassign ? settings.item_size_max
@@ -310,7 +316,6 @@ static int do_slabs_newslab(const unsigned int id) {
     if ((*mem_limit && *mem_malloced + len > *mem_limit && p->slabs > 0) ||
         (grow_slab_list(id) == 0) ||
         ((ptr = memory_allocate((size_t)len)) == 0)) {
-
         MEMCACHED_SLABS_SLABCLASS_ALLOCATE_FAILED(id);
         return 0;
     }
@@ -321,7 +326,6 @@ static int do_slabs_newslab(const unsigned int id) {
     p->slab_list[p->slabs++] = ptr;
     *mem_malloced += len;
     MEMCACHED_SLABS_SLABCLASS_ALLOCATE(id);
-
     return 1;
 }
 
@@ -362,6 +366,7 @@ static void *do_slabs_alloc(const size_t size, unsigned int id) {
         it = (item *)p->slots;
         p->slots = it->next;
         if (it->next) it->next->prev = 0;
+        it->next = 0; //dummy write
         p->sl_curr--;
         ret = (void *)it;
     }
@@ -399,6 +404,7 @@ static void do_slabs_free(void *ptr, const size_t size, unsigned int id) {
 
     p->sl_curr++;
     p->requested -= size;
+        
     //}
     return;
 }
@@ -527,7 +533,7 @@ __transaction_atomic { //assaf
             *mem_avail = 0;
         }
     }
-}
+ }
     return ret;
 }
 
@@ -665,7 +671,7 @@ static void srm_fprintf1(void *param)
     int* ip = (int*)param;
     fprintf(stderr, "Slab reassign hit a busy item: refcount: %d (%d -> %d)\n",
             ip[0], ip[1], ip[2]);
-     excitevm_sfree(ip);
+    /*excitevm_s*/free(ip);
 }
 
 /* refcount == 0 is safe since nobody can incr while cache_lock is held.
@@ -699,6 +705,7 @@ static int slab_rebalance_move(void) {
             {
                 // [branch 007] use new tm refcounts
                 refcount = tm_refcount_incr(&it->tm_refcount);
+                
                 if (refcount == 1) { /* item is unlinked, unused */
                     if (it->it_flags & ITEM_SLABBED) {
                         /* remove from slab freelist */
@@ -728,7 +735,7 @@ static int slab_rebalance_move(void) {
                         // [branch 012] This one was annoying... the fprintf
                         //              has 3 params, so we need to tuck them
                         //              away for later
-                        int* newdata = excitevm_smalloc(3*sizeof(int));
+                        int* newdata = /*excitevm_s*/malloc(3*sizeof(int));
                         newdata[0] = it->tm_refcount;
                         newdata[1] = slab_rebal.s_clsid;
                         newdata[2] = slab_rebal.d_clsid;

@@ -9,7 +9,7 @@
 
 #include "cache.h"
 
-#define USE_REGULAR_MALLOC
+//#define USE_REGULAR_MALLOC
 
 #ifdef USE_REGULAR_MALLOC
 #define excitevm_smalloc(X) malloc(X)
@@ -32,14 +32,14 @@ const int initial_pool_size = 64;
 cache_t* cache_create(const char *name, size_t bufsize, size_t align,
                       cache_constructor_t* constructor,
                       cache_destructor_t* destructor) {
-    cache_t* ret =  excitevm_scalloc(1, sizeof(cache_t));
+    cache_t* ret =  /*excitevm_s*/calloc(1, sizeof(cache_t));
     char* nm = strdup(name);
-    void** ptr =  excitevm_scalloc(initial_pool_size, sizeof(void*));
+    void** ptr =  /*excitevm_s*/calloc(initial_pool_size, sizeof(void*));
     if (ret == NULL || nm == NULL || ptr == NULL ||
         pthread_mutex_init(&ret->mutex, NULL) == -1) {
-         excitevm_sfree(ret);
-         excitevm_sfree(nm);
-         excitevm_sfree(ptr);
+        /*excitevm_s*/free(ret);
+        /*excitevm_s*/free(nm);
+        /*excitevm_s*/free(ptr);
         return NULL;
     }
 
@@ -74,13 +74,13 @@ void cache_destroy(cache_t *cache) {
             cache->destructor(get_object(ptr), NULL);
         }
 //assert(0);
-         excitevm_sfree(ptr);
+        /*excitevm_s*/free(ptr);
     }
 //assert(0);
-     excitevm_sfree(cache->name);
-     excitevm_sfree(cache->ptr);
+     /*excitevm_s*/free(cache->name);
+     /*excitevm_s*/free(cache->ptr);
     pthread_mutex_destroy(&cache->mutex);
-     excitevm_sfree(cache);
+     /*excitevm_s*/free(cache);
 }
 
 void* cache_alloc(cache_t *cache) {
@@ -91,14 +91,14 @@ void* cache_alloc(cache_t *cache) {
         ret = cache->ptr[--cache->freecurr];
         object = get_object(ret);
     } else {
-        object = ret = excitevm_smalloc(cache->bufsize);
+        object = ret = /*excitevm_s*/malloc(cache->bufsize);
         if (ret != NULL) {
             object = get_object(ret);
 
             if (cache->constructor != NULL &&
                 cache->constructor(object, NULL, 0) != 0) {
 //assert(0);
-                 excitevm_sfree(ret);
+                 /*excitevm_s*/free(ret);
                 object = NULL;
             }
         }
@@ -146,7 +146,7 @@ void cache_free(cache_t *cache, void *ptr) {
     } else {
         /* try to enlarge free connections array */
         size_t newtotal = cache->freetotal * 2;
-        void **new_free =  excitevm_srealloc(cache->ptr, sizeof(char *) * newtotal);
+        void **new_free =  /*excitevm_s*/realloc(cache->ptr, sizeof(char *) * newtotal);
         if (new_free) {
             cache->freetotal = newtotal;
             cache->ptr = new_free;
@@ -156,7 +156,7 @@ void cache_free(cache_t *cache, void *ptr) {
                 cache->destructor(ptr, NULL);
             }
 //assert(0);
-             excitevm_sfree(ptr);
+             /*excitevm_s*/free(ptr);
 
         }
     }
