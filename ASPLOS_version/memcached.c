@@ -1339,6 +1339,7 @@ static void add_bin_header(conn *c, uint16_t err, uint8_t hdr_len, uint16_t key_
     add_iov(c, c->wbuf, sizeof(header->response));
 }
 
+__attribute__((transaction_pure))
 static void write_bin_error(conn *c, protocol_binary_response_status err, int swallow) {
     const char *errstr = "Unknown error";
     size_t len;
@@ -1468,22 +1469,35 @@ static void complete_incr_bin(conn *c) {
         if (req->message.body.expiration != 0xffffffff) {
             /* Save some room for the response */
             rsp->message.body.value = htonll(req->message.body.initial);
+            int bin_resp = 1;
+            __transaction_atomic{ //heiner
             it = item_alloc(key, nkey, 0, realtime(req->message.body.expiration),
                             INCR_MAX_STORAGE_LEN);
 
             if (it != NULL) {
-                snprintf(ITEM_data(it), INCR_MAX_STORAGE_LEN, "%llu",
-                         (unsigned long long)req->message.body.initial);
+                //heiner transactionalize snprintf
+                //                snprintf(ITEM_data(it), INCR_MAX_STORAGE_LEN, "%llu",
+                //         (unsigned long long)req->message.body.initial);
+                tm_snprintf_dad(ITEM_data(it), (unsigned long long)req->message.body.initial);
 
                 if (store_item(it, NREAD_ADD, c)) {
                     c->cas = ITEM_get_cas(it);
-                    write_bin_response(c, &rsp->message.body, 0, 0, sizeof(rsp->message.body.value));
+                    bin_resp = 1;
+                    //write_bin_response(c, &rsp->message.body, 0, 0, sizeof(rsp->message.body.value));
                 } else {
-                    write_bin_error(c, PROTOCOL_BINARY_RESPONSE_NOT_STORED, 0);
+                    bin_resp = 1;
+                    //write_bin_error(c, PROTOCOL_BINARY_RESPONSE_NOT_STORED, 0);
                 }
                 item_remove(it);         /* release our reference */
             } else {
-                write_bin_error(c, PROTOCOL_BINARY_RESPONSE_ENOMEM, 0);
+                bin_resp = 3;
+                //write_bin_error(c, PROTOCOL_BINARY_RESPONSE_ENOMEM, 0);
+            }
+            }
+            switch(bin_resp){
+            case 1: write_bin_response(c, &rsp->message.body, 0, 0, sizeof(rsp->message.body.value)); break;
+            case 2: write_bin_error(c, PROTOCOL_BINARY_RESPONSE_NOT_STORED,0); break;
+            default: write_bin_error(c, PROTOCOL_BINARY_RESPONSE_ENOMEM, 0); break;
             }
         } else {
             // [branch 010] Replace per-thread stats lock with atomic transaction
@@ -1496,7 +1510,7 @@ static void complete_incr_bin(conn *c) {
             }
 
             write_bin_error(c, PROTOCOL_BINARY_RESPONSE_KEY_ENOENT, 0);
-        }
+            }
         break;
     case DELTA_ITEM_CAS_MISMATCH:
         write_bin_error(c, PROTOCOL_BINARY_RESPONSE_KEY_EEXISTS, 0);
@@ -1526,9 +1540,9 @@ __transaction_atomic { //assaf
     if((it->it_flags & (ITEM_LINKED|ITEM_SLABBED)) != 0){
         printf("complite update bin\n");
     }*/
- }
+ 
     ret = store_item(it, c->cmd, c);
-
+ }
 #ifdef ENABLE_DTRACE
     uint64_t cas = ITEM_get_cas(it);
     switch (c->cmd) {
@@ -1836,8 +1850,8 @@ static int tm_snprintf_s_s(char *str, size_t size, const char *format,
 
 // [branch 011b] This form of snprintf is for when we need to marshall onto a
 //               shared string in do_add_delta.
-__attribute__((transaction_safe))
-static void tm_snprintf_dad(char *str, unsigned long long val1)
+//__attribute__((transaction_safe))
+/*static*/ void tm_snprintf_dad(char *str, unsigned long long val1)
 {
     // create temp space
     char buf[INCR_MAX_STORAGE_LEN];
@@ -2548,9 +2562,9 @@ static void process_bin_update(conn *c) {
     if (ITEM_get_cas(it) != 0) {
         c->cmd = NREAD_CAS;
     }
-    }
+    //}
+    //__transaction_atomic{
     c->item = it;
-    __transaction_atomic{
     c->ritem = ITEM_data(it);
     }
     c->rlbytes = vlen;
@@ -4496,7 +4510,7 @@ static void drive_machine(conn *c) {
     int nreqs = settings.reqs_per_event;
     int res;
     const char *str;
-
+   
     assert(c != NULL);
 
     while (!stop) {
@@ -4620,7 +4634,10 @@ static void drive_machine(conn *c) {
             if (c->rbytes > 0) {
                 int tocopy = c->rbytes > c->rlbytes ? c->rlbytes : c->rbytes;
                 if (c->ritem != c->rcurr) {
-                    memmove(c->ritem, c->rcurr, tocopy);
+                    __transaction_atomic{//heiner
+                        //memmove(c->ritem, c->rcurr, tocopy);
+                        tm_memcpy(c->ritem, c->rcurr, tocopy);
+                    }
                 }
                 c->ritem += tocopy;
                 c->rlbytes -= tocopy;
@@ -4630,7 +4647,6 @@ static void drive_machine(conn *c) {
                     break;
                 }
             }
-
             /*  now try reading from the socket */
             res = read(c->sfd, c->ritem, c->rlbytes);
             if (res > 0) {
@@ -4798,6 +4814,7 @@ static void drive_machine(conn *c) {
             assert(false);
             break;
         }
+
     }
 
     return;

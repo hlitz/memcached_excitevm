@@ -393,7 +393,7 @@ void do_item_unlink(item *it, const uint32_t hv) {
 /* FIXME: Is it necessary to keep this copy/pasted code? */
 void do_item_unlink_nolock(item *it, const uint32_t hv) {
     MEMCACHED_ITEM_UNLINK(ITEM_key(it), it->nkey, it->nbytes);
-    //__transaction_atomic{ //need to do this in a transaction to make
+    __transaction_atomic{ //need to do this in a transaction to make
         //writes visible for excite-vm
     if ((it->it_flags & ITEM_LINKED) != 0) {
         it->it_flags &= ~ITEM_LINKED;
@@ -410,7 +410,7 @@ void do_item_unlink_nolock(item *it, const uint32_t hv) {
         
         do_item_remove(it);
     }
-    //}
+    }
 }
 
 __attribute__((transaction_pure))

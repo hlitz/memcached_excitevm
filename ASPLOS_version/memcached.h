@@ -641,12 +641,14 @@ void accept_new_conns(const bool do_accept);
 conn *conn_from_freelist(void);
 bool  conn_add_to_freelist(conn *c);
 int   is_listen_thread(void);
+__attribute__((transaction_safe)) //heiner
 item *item_alloc(char *key, size_t nkey, int flags, rel_time_t exptime, int nbytes);
 char *item_cachedump(const unsigned int slabs_clsid, const unsigned int limit, unsigned int *bytes);
 void  item_flush_expired(void);
 item *item_get(const char *key, const size_t nkey);
 item *item_touch(const char *key, const size_t nkey, uint32_t exptime);
 int   item_link(item *it);
+__attribute__((transaction_safe)) //heiner
 void  item_remove(item *it);
 // [branch 011b] This is called from a relaxed transaction
 // [branch 012b] With fprintf oncommit, this becomes safe
@@ -732,8 +734,13 @@ int tm_snprintf_d_d(char *str, size_t size, const char *format, int val1, int va
 __attribute__ ((transaction_pure))
 void inTransaction (void);
 
-
+__attribute__((transaction_safe))
 enum store_item_type store_item(item *item, int comm, conn *c);
+
+//heiner make this accessible too
+__attribute__((transaction_safe))
+void tm_snprintf_dad(char *str, unsigned long long val1);
+
 
 #if HAVE_DROP_PRIVILEGES
 extern void drop_privileges(void);
