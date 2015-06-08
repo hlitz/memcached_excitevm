@@ -1,5 +1,5 @@
 /* -*- Mode: C; tab-width: 4; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-#undef NDEBUG
+//#undef NDEBUG
 #include <pthread.h>
 #include <sys/types.h>
 #include <sys/socket.h>

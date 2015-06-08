@@ -97,25 +97,20 @@ int tm_memcmp(const void *s1, const void *s2, size_t n)
     return 0;
 }
 
+
+__attribute__((transaction_pure))
+void tm_printf(void* d){
+    printf("f %p d \n", d);
+}
+
 // [branch 009] Provide an implementation of memcpy that is transaction_safe
 //
 // NB: this code was taken from
 // https://www.student.cs.uwaterloo.ca/~cs350/common/os161-src-html/memcpy_8c-source.html
-void * tm_memcpy(void *dst, const void *src, size_t len)
+/*void * tm_memcpy(void *dst, const void *src, size_t len)
 {
-    size_t i;
-    /*
-     * memcpy does not support overlapping buffers, so always do it
-     * forwards. (Don't change this without adjusting memmove.)
-     *
-     * For speedy copying, optimize the common case where both pointers
-     * and the length are word-aligned, and copy word-at-a-time instead
-     * of byte-at-a-time. Otherwise, copy by bytes.
-     *
-     * The alignment logic below should be portable. We rely on
-     * the compiler to be reasonably intelligent about optimizing
-     * the divides and modulos out. Fortunately, it is.
-     */
+    size_t i, i2, i3;
+  
     if ((uintptr_t)dst % sizeof(long) == 0 &&
         (uintptr_t)src % sizeof(long) == 0 &&
         len % sizeof(long) == 0)
@@ -128,14 +123,156 @@ void * tm_memcpy(void *dst, const void *src, size_t len)
     }
     else {
         char *d = dst;
+        //preamble
         const char *s = src;
         for (i=0; i<len; i++) {
+            if((((unsigned long)(d+i))&0x7)==0x0UL)
+                break;
             d[i] = s[i];
         }
+        //main dest = qw-aligned copy loop
+        size_t qw_len = (len-i)>>3;
+        long *d2 = (long*)&d[i];
+        long *s2 = (long*)&s[i];
+        for (i2= 0; i2< qw_len; i2++){
+            d2[i2] = s2[i2];
+        } 
+        //postable
+        i3 = len-i-(i2<<3);
+        char *d3 = (char*)&d2[i2];
+        char *s3 = (char*)&s2[i2];
+        for (i3=0; i3<len; i3++) {
+            d3[i3] = s3[i3];
+        }
+        
+
+    }
+    return dst;
+}*/
+
+void * tm_memcpy(void *dst, const void *src, size_t len)
+{
+    size_t i, i2, i3;
+    /*
+     * memcpy does not support overlapping buffers, so always do it
+     * forwards. (Don't change this without adjusting memmove.)
+     *
+     * For speedy copying, optimize the common case where both pointers
+     * and the length are word-aligned, and copy word-at-a-time instead
+     * of byte-at-a-time. Otherwise, copy by bytes.
+     *
+     * The alignment logic below should be portable. We rely on
+     * the compiler to be reasonably intelligent about optimizing
+     * the divides and modulos out. Fortunately, it is.
+     */
+
+    if ((uintptr_t)dst % sizeof(long) == 0 &&
+        (uintptr_t)src % sizeof(long) == 0 &&
+        len % sizeof(long) == 0)
+    {
+        long *d = dst;
+        const long *s = src;
+        for (i=0; i<len/sizeof(long); i++) {
+            d[i] = s[i];
+        }
+    }
+    else {
+        char *d = dst;
+        int maincp=0;
+        int preamble=0;
+        int postamble=0;
+        //preamble
+        const char *s = src;
+        for (i=0; i<len; i++) {
+            if((((unsigned long)(d+i))&0x7)==0x0UL)
+                break;
+            d[i] = s[i];
+            preamble++;
+        }
+        //printf("copied preamble %i up to %p\n", (int)i, &d[i]);
+        //main dest = qw-aligned copy loop
+        size_t qw_len = (len-i)>>3;
+        long *d2 = (long*)&d[preamble];
+        long *s2 = (long*)&s[preamble];
+        for (i2= 0; i2< qw_len; i2++){
+            d2[i2] = s2[i2];
+            maincp++;
+        } 
+        //printf("copied main %i up to %p\n", (int)i2, (void*)&d2[i2]);
+        //postable
+        postamble = (len-preamble)-(maincp<<3);
+        char *d3 = (char*)&d2[maincp];
+        char *s3 = (char*)&s2[maincp];
+        for (i3=0; i3<postamble; i3++) {
+            d3[i3] = s3[i3];
+        }
+        //printf("copied postamble %i up to %p\n", (int)i3, &d3[i3]);
     }
     return dst;
 }
 
+void * tm_memset(void *dst, int val, size_t len)
+{
+    //    return excitevm_memcpy(dst, (void*)src, len);
+    size_t i, i2, i3;
+    /*
+     * memcpy does not support overlapping buffers, so always do it
+     * forwards. (Don't change this without adjusting memmove.)
+     *
+     * For speedy copying, optimize the common case where both pointers
+     * and the length are word-aligned, and copy word-at-a-time instead
+     * of byte-at-a-time. Otherwise, copy by bytes.
+     *
+     * The alignment logic below should be portable. We rely on
+     * the compiler to be reasonably intelligent about optimizing
+     * the divides and modulos out. Fortunately, it is.
+     */
+
+    if ((uintptr_t)dst % sizeof(long) == 0 &&
+        len % sizeof(long) == 0)
+    {
+        long *d = dst;
+        for (i=0; i<len/sizeof(long); i++) {
+            d[i] = val;
+        }
+    }
+    else {
+        char *d = dst;
+        int maincp=0;
+        int preamble=0;
+        int postamble=0;
+        //preamble
+        val = val&0xFF;
+        long value = val;
+        value = value | value<<8 | value<<16  | value<<24 | value<<32 | value<<40 | value<<48 | value<<56;  
+        for (i=0; i<len; i++) {
+            if((((unsigned long)(d+i))&0x7)==0x0UL)
+                break;
+            d[i] = (char)value;
+            preamble++;
+        }
+        //printf("copied preamble %i up to %p\n", (int)i, &d[i]);
+        //main dest = qw-aligned copy loop
+        size_t qw_len = (len-i)>>3;
+        long *d2 = (long*)&d[preamble];
+        //long *s2 = (long*)&s[preamble];
+        for (i2= 0; i2< qw_len; i2++){
+            d2[i2] = value;
+            maincp++;
+        } 
+        //printf("copied main %i up to %p\n", (int)i2, (void*)&d2[i2]);
+        //postable
+        postamble = (len-preamble)-(maincp<<3);
+        char *d3 = (char*)&d2[maincp];
+        //char *s3 = (char*)&s2[maincp];
+        for (i3=0; i3<postamble; i3++) {
+            d3[i3] = value;//s3[i3];
+        }
+        //printf("copied postamble %i up to %p\n", (int)i3, &d3[i3]);
+    }
+    return dst;
+}
+/*
 void* tm_memset(void *dst, int c, size_t len) {
     size_t i;
     if ((uintptr_t)dst % sizeof(long) == 0 &&
@@ -156,7 +293,7 @@ void* tm_memset(void *dst, int c, size_t len) {
     }
     return dst;
 
-    /*
+    
 
 
 
@@ -167,7 +304,7 @@ void* tm_memset(void *dst, int c, size_t len) {
         len--;
     }
     return s;*/
-}
+//}
 
 
 // [branch 009] provide a safe implementation of strlen
@@ -751,7 +888,7 @@ conn *conn_new(const int sfd, enum conn_states init_state,
         c->msgsize = MSG_LIST_INITIAL;
         c->hdrsize = 0;
 
-        c->rbuf = (char *)malloc((size_t)c->rsize);
+        c->rbuf = (char *)malloc((size_t)c->rsize);        
         c->wbuf = (char *)malloc((size_t)c->wsize);
         c->ilist = (item **)malloc(sizeof(item *) * c->isize);
         c->suffixlist = (char **)malloc(sizeof(char *) * c->suffixsize);
@@ -2566,7 +2703,7 @@ static void process_bin_update(conn *c) {
     //__transaction_atomic{
     c->item = it;
     c->ritem = ITEM_data(it);
-    }
+    }  
     c->rlbytes = vlen;
     conn_set_state(c, conn_nread);
     c->substate = bin_read_set_value;
@@ -5471,10 +5608,78 @@ static bool sanitycheck(void) {
     return true;
 }
 
+    char sx[4096*8];
+    char dx[4096*8];
+
 int main (int argc, char **argv) {
+
     excitevm_init();
     excitevm_enter();
     init_item_globals();
+    char* s;
+    char* d;
+    
+    __transaction_atomic {
+        s = excitevm_smalloc(sizeof(char)*4096*8);
+        d = excitevm_smalloc(sizeof(char)*4096*8);
+    }
+
+    for(int i =0; i<(4096*8); i++){
+        sx[i] = rand();
+        dx[i] = 0;
+    }
+    __transaction_atomic {
+        for(int i =0; i<(4096*8); i++){
+            s[i] = sx[i];
+            d[i] = 0;
+        }
+    }
+    for(int i =0; i<3; i++){
+        long a = rand()%(2048*8);
+        long b = rand()%(2048*8);
+        long size = rand()%(2048*8);
+       
+        printf("a %p  b %p size %lx\n", (void*)&d[a], (void*)&s[b], size);  
+        __transaction_atomic {
+        tm_memcpy(&d[a], &s[b], size);
+        }
+        memcpy(&dx[a], &sx[b], size);
+        bool failed = false;
+        int e;
+        __transaction_atomic {
+           
+        for(e=0; e<4096; e++){
+            if(d[e]!=dx[e]){
+                failed=true;
+                break;
+            }
+        }
+        }
+        if(failed){
+            printf("d %lx dx %lx a %lx b %lx size %lx dest addr %p\n", (long)d[e], (long)dx[e], a, b, size, (void*)&d[e]);
+            assert(0);
+            exit(0);
+        }
+
+
+    }
+    printf("done!\n");
+   
+    /*    s[0] = 0x8877665544332211UL;
+    s[1] = 0xCAFEBABEDEADBEAFUL;
+    s[2] = 0xCAFEBABEDEADBEAFUL;
+    s[3] = 0xCAFEBABEDEADBEAFUL;
+    d[0] = ~0x0UL;
+    d[1] = ~0x0UL;
+    d[2] = ~0x0UL;
+    d[3] = ~0x0UL;
+
+    excitevm_memcpy(((char*)d)+3, ((char*)s), 11);
+    for(int i =0;i<4; i++){
+        printf("i %i : %lx\n", i, d[i]);
+    }
+    */
+    //    assert(0);
 
     char a[] = "abb";
     char b[3];

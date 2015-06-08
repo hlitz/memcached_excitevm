@@ -259,7 +259,6 @@ item *do_item_alloc(char *key, const size_t nkey, const int flags,
     tm_memcpy(ITEM_suffix(it), suffix, (size_t)nsuffix);
     it->nsuffix = nsuffix;
     }
-
     return it;
 }
 

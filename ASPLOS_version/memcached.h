@@ -44,6 +44,7 @@
 // [branch 008] Support for safe assertions.  Note that the evaluation of the
 // expression occurs within the context of the transaction, but we don't
 // commit before we call the safe_assert_internal code.
+
 #if defined(NDEBUG)
 #define tm_assert(e)   ((void)0)
 #else
@@ -52,6 +53,9 @@
 __attribute__((transaction_pure))
 void tm_assert_internal(const char *filename, int linenum, const char *funcname, const char *sourceline);
 #endif /* NDEBUG */
+
+__attribute__((transaction_pure))
+void tm_printf(void* d);
 
 // [branch 008] This is our 'safe' printf-and-abort function
 __attribute__((transaction_pure))
