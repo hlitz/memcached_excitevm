@@ -669,6 +669,8 @@ static rel_time_t realtime(const time_t exptime) {
 }
 
 static void stats_init(void) {
+    time_t temp_time = time(0) - 2;
+    __transaction_atomic{
     stats.curr_items = stats.total_items = stats.curr_conns = stats.total_conns = stats.conn_structs = 0;
     stats.get_cmds = stats.set_cmds = stats.get_hits = stats.get_misses = stats.evictions = stats.reclaimed = 0;
     stats.touch_cmds = stats.touch_misses = stats.touch_hits = stats.rejected_conns = 0;
@@ -683,9 +685,9 @@ static void stats_init(void) {
        did, so time(0) - time.started is never zero.  if so, things
        like 'settings.oldest_live' which act as booleans as well as
        values are now false in boolean context... */
-    process_started = time(0) - 2;
+    process_started = temp_time;//time(0) - 2;
     stats_prefix_init();
-
+    }
 char *method = getenv("ITM_DEFAULT_METHOD");
 if (method && strncmp(method, "svm", 3) == 0) {
   printf("svm\n");
@@ -5618,30 +5620,30 @@ int main (int argc, char **argv) {
     init_item_globals();
     char* s;
     char* d;
-    
-    __transaction_atomic {
-        s = excitevm_smalloc(sizeof(char)*4096*8);
-        d = excitevm_smalloc(sizeof(char)*4096*8);
-    }
-
     for(int i =0; i<(4096*8); i++){
         sx[i] = rand();
         dx[i] = 0;
     }
+    
     __transaction_atomic {
+        s = excitevm_smalloc(sizeof(char)*4096*8);
+        d = excitevm_smalloc(sizeof(char)*4096*8);
+        //    }
+
+        //__transaction_atomic {
         for(int i =0; i<(4096*8); i++){
             s[i] = sx[i];
             d[i] = 0;
         }
     }
-    for(int i =0; i<3; i++){
+    for(int i =0; i<100; i++){
         long a = rand()%(2048*8);
         long b = rand()%(2048*8);
         long size = rand()%(2048*8);
        
-        printf("a %p  b %p size %lx\n", (void*)&d[a], (void*)&s[b], size);  
+        //        printf("a %p  b %p size %lx\n", (void*)&d[a], (void*)&s[b], size);  
         __transaction_atomic {
-        tm_memcpy(&d[a], &s[b], size);
+            tm_memcpy(&d[a], &s[b], size);
         }
         memcpy(&dx[a], &sx[b], size);
         bool failed = false;
@@ -5660,11 +5662,12 @@ int main (int argc, char **argv) {
             assert(0);
             exit(0);
         }
+        excitevm_sync();
 
 
     }
-    printf("done!\n");
-   
+        printf("done!\n");
+        //exit(0);
     /*    s[0] = 0x8877665544332211UL;
     s[1] = 0xCAFEBABEDEADBEAFUL;
     s[2] = 0xCAFEBABEDEADBEAFUL;

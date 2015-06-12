@@ -1,4 +1,5 @@
 /* stats */
+__attribute__((transaction_safe))
 void stats_prefix_init(void);
 // [branch 004] This function is called from a relaxed transaction
 // [branch 005] This function is actually transaction safe

@@ -100,6 +100,12 @@ void assoc_init(const int hashtable_init) {
         *started_expanding = false;
         *expand_bucket = 0;
     }
+    printf("1 %p\n", (void*)expand_bucket);
+    printf("2 %p\n", (void*)hashpower);
+    printf("3 %p\n", (void*)hash_items);
+    printf("4 %p\n", (void*)expanding);
+    printf("5 %p\n", (void*)started_expanding);
+
 
     // [branch 001] Initialize the semaphore.
     //
@@ -111,7 +117,9 @@ void assoc_init(const int hashtable_init) {
     if (hashtable_init) {
         *hashpower = hashtable_init;
     }
+    //    primary_hashtable = excitevm_scalloc(hashsize(*hashpower), sizeof(void*));
     primary_hashtable = excitevm_scalloc(hashsize(*hashpower), sizeof(void*));
+        tm_memset(primary_hashtable, 0, hashsize(*hashpower)* sizeof(void*));
     }
     if (! primary_hashtable) {
         fprintf(stderr, "Failed to init hashtable.\n");
@@ -123,6 +131,7 @@ void assoc_init(const int hashtable_init) {
     stats.hash_power_level = *hashpower;
     stats.hash_bytes = hashsize(*hashpower) * sizeof(void *);
     }
+    printf("prime %p\n", (void*)primary_hashtable);
 }
 
 item *assoc_find(const char *key, const size_t nkey, const uint32_t hv) {
@@ -190,7 +199,9 @@ __attribute__((transaction_safe))
 static void assoc_expand(void) {
     old_hashtable = primary_hashtable;
 
+    //    primary_hashtable = excitevm_scalloc(hashsize(*hashpower + 1), sizeof(void *));
     primary_hashtable = excitevm_scalloc(hashsize(*hashpower + 1), sizeof(void *));
+    tm_memset(primary_hashtable, 0, hashsize(*hashpower + 1)* sizeof(void *));
     if (primary_hashtable) {
         if (settings.verbose > 1)
             // [branch 012] Replace fprintf with oncommit
