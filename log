@@ -1,0 +1,510 @@
+make  all-recursive
+make[1]: Entering directory `/memcached/tm_memcached/SI_version'
+Making all in doc
+make[2]: Entering directory `/memcached/tm_memcached/SI_version/doc'
+make  all-am
+make[3]: Entering directory `/memcached/tm_memcached/SI_version/doc'
+make[3]: Nothing to be done for `all-am'.
+make[3]: Leaving directory `/memcached/tm_memcached/SI_version/doc'
+make[2]: Leaving directory `/memcached/tm_memcached/SI_version/doc'
+make[2]: Entering directory `/memcached/tm_memcached/SI_version'
+gcc -std=gnu++11 -fgnu-tm -DHAVE_CONFIG_H -I.  -DNDEBUG   -g -O2 -pthread -fgnu-tm -pthread -Wall -Werror -pedantic -Wmissing-prototypes -Wmissing-declarations -Wredundant-decls -MT memcached-memcached.o -MD -MP -MF .deps/memcached-memcached.Tpo -c -o memcached-memcached.o `test -f 'memcached.c' || echo './'`memcached.c
+cc1: error: command line option ‘-std=gnu++11’ is valid for C++/ObjC++ but not for C [-Werror]
+In file included from memcached.h:24:0,
+                 from memcached.c:16:
+sasl_defs.h:4:1: error: C++ style comments are not allowed in ISO C90 [-Werror]
+ // Longest one I could find was ``9798-U-RSA-SHA1-ENC''
+ ^
+sasl_defs.h:4:1: error: (this will be reported only once per input file) [-Werror]
+In file included from memcached.c:16:0:
+memcached.h:26:1: error: C++ style comments are not allowed in ISO C90 [-Werror]
+ // [branch 012] Include errno, so we can access it in our new perror code
+ ^
+memcached.h:26:1: error: (this will be reported only once per input file) [-Werror]
+In file included from memcached.c:16:0:
+memcached.h:74:15: error: ISO C90 does not support ‘long long’ [-Werror=long-long]
+ unsigned long long int tm_strtoull(const char *nptr, char **endptr, int base);
+               ^
+memcached.h:259:26: error: comma at end of enumerator list [-Werror=pedantic]
+     bin_reading_touch_key,
+                          ^
+memcached.h:438:7: error: ISO C90 does not support flexible array members [-Werror=pedantic]
+     } data[];
+       ^
+In file included from memcached.h:601:0,
+                 from memcached.c:16:
+stats.h:3:1: error: C++ style comments are not allowed in ISO C90 [-Werror]
+ // [branch 004] This function is called from a relaxed transaction
+ ^
+stats.h:3:1: error: (this will be reported only once per input file) [-Werror]
+In file included from memcached.h:602:0,
+                 from memcached.c:16:
+slabs.h:19:1: error: C++ style comments are not allowed in ISO C90 [-Werror]
+ // [branch 004b] This function is called from a relaxed transaction
+ ^
+slabs.h:19:1: error: (this will be reported only once per input file) [-Werror]
+In file included from memcached.h:603:0,
+                 from memcached.c:16:
+assoc.h:3:1: error: C++ style comments are not allowed in ISO C90 [-Werror]
+ // [branch 004b] This function is called from a relaxed transaction
+ ^
+assoc.h:3:1: error: (this will be reported only once per input file) [-Werror]
+In file included from memcached.h:604:0,
+                 from memcached.c:16:
+items.h:2:1: error: C++ style comments are not allowed in ISO C90 [-Werror]
+ // [branch 004] This function is called from a relaxed transaction
+ ^
+items.h:2:1: error: (this will be reported only once per input file) [-Werror]
+In file included from memcached.h:606:0,
+                 from memcached.c:16:
+hash.h:8:1: error: C++ style comments are not allowed in ISO C90 [-Werror]
+ // [branch 004] This function is called from a relaxed transaction
+ ^
+hash.h:8:1: error: (this will be reported only once per input file) [-Werror]
+In file included from memcached.h:607:0,
+                 from memcached.c:16:
+util.h:10:1: error: C++ style comments are not allowed in ISO C90 [-Werror]
+ // [branch 004b] This function is called from a relaxed transaction
+ ^
+util.h:10:1: error: (this will be reported only once per input file) [-Werror]
+In file included from memcached.c:16:0:
+memcached.h:673:53: error: ISO C90 does not support ‘long long’ [-Werror=long-long]
+                      const char *fmt, unsigned long long val);
+                                                     ^
+memcached.h:698:35: error: ISO C90 does not support ‘long long’ [-Werror=long-long]
+                     unsigned long long val);
+                                   ^
+memcached.c:50:1: error: C++ style comments are not allowed in ISO C90 [-Werror]
+ // [branch 012] Include support for registering onCommit handlers:
+ ^
+memcached.c:50:1: error: (this will be reported only once per input file) [-Werror]
+In file included from memcached.c:53:0:
+/memcached/tm-persistence/min-gcc/libitm/libitm.h:64:26: error: comma at end of enumerator list [-Werror=pedantic]
+     modeSerialIrrevocable,
+                          ^
+/memcached/tm-persistence/min-gcc/libitm/libitm.h:181:15: error: ISO C90 does not support complex types [-Werror=pedantic]
+ typedef float _Complex _ITM_TYPE_CF;
+               ^
+/memcached/tm-persistence/min-gcc/libitm/libitm.h:182:16: error: ISO C90 does not support complex types [-Werror=pedantic]
+ typedef double _Complex _ITM_TYPE_CD;
+                ^
+/memcached/tm-persistence/min-gcc/libitm/libitm.h:183:21: error: ISO C90 does not support complex types [-Werror=pedantic]
+ typedef long double _Complex _ITM_TYPE_CE;
+                     ^
+/memcached/tm-persistence/min-gcc/libitm/libitm.h:278:1: error: C++ style comments are not allowed in ISO C90 [-Werror]
+ // ??? These are not yet in the official spec; still work-in-progress.
+ ^
+/memcached/tm-persistence/min-gcc/libitm/libitm.h:278:1: error: (this will be reported only once per input file) [-Werror]
+memcached.c: In function ‘tm_realloc’:
+memcached.c:207:5: error: ISO C90 forbids mixed declarations and code [-Werror=pedantic]
+     size_t copySize = *(size_t *)((char *)oldp - sizeof(size_t));
+     ^
+memcached.c: At top level:
+memcached.c:299:15: error: ISO C90 does not support ‘long long’ [-Werror=long-long]
+ unsigned long long int tm_strtoull(const char *nptr, char **endptr, int base)
+               ^
+memcached.c: In function ‘tm_strtoull’:
+memcached.c:302:19: error: ISO C90 does not support ‘long long’ [-Werror=long-long]
+     unsigned long long acc, cutoff;
+                   ^
+memcached.c:330:42: error: ISO C90 does not support ‘long long’ [-Werror=long-long]
+     cutoff = ULLONG_MAX / (unsigned long long)base;
+                                          ^
+memcached.c:331:42: error: ISO C90 does not support ‘long long’ [-Werror=long-long]
+     cutlim = ULLONG_MAX % (unsigned long long)base;
+                                          ^
+memcached.c:349:35: error: ISO C90 does not support ‘long long’ [-Werror=long-long]
+             acc *= (unsigned long long)base;
+                                   ^
+memcached.c: In function ‘maxconns_handler’:
+memcached.c:461:25: error: ISO C90 forbids specifying subobject to initialize [-Werror=pedantic]
+     struct timeval t = {.tv_sec = 0, .tv_usec = 10000};
+                         ^
+memcached.c:461:38: error: ISO C90 forbids specifying subobject to initialize [-Werror=pedantic]
+     struct timeval t = {.tv_sec = 0, .tv_usec = 10000};
+                                      ^
+memcached.c: In function ‘complete_nread_ascii’:
+memcached.c:1173:5: error: ISO C90 forbids mixed declarations and code [-Werror=pedantic]
+     item *it = c->item;
+     ^
+memcached.c: In function ‘complete_incr_bin’:
+memcached.c:1402:23: error: ISO C90 does not support ‘long long’ [-Werror=long-long]
+                 (long long)req->message.body.delta,
+                       ^
+memcached.c:1403:23: error: ISO C90 does not support ‘long long’ [-Werror=long-long]
+                 (long long)req->message.body.initial,
+                       ^
+memcached.c:1404:17: error: ISO C90 does not support the ‘ll’ gnu_printf length modifier [-Werror=format=]
+                 req->message.body.expiration);
+                 ^
+memcached.c:1404:17: error: ISO C90 does not support the ‘ll’ gnu_printf length modifier [-Werror=format=]
+memcached.c:1436:41: error: ISO C90 does not support ‘long long’ [-Werror=long-long]
+                          (unsigned long long)req->message.body.initial);
+                                         ^
+memcached.c:1436:26: error: ISO C90 does not support the ‘ll’ gnu_printf length modifier [-Werror=format=]
+                          (unsigned long long)req->message.body.initial);
+                          ^
+memcached.c:1436:26: error: ISO C90 does not support the ‘ll’ gnu_printf length modifier [-Werror=format=]
+memcached.c: In function ‘complete_update_bin’:
+memcached.c:1472:5: error: ISO C90 forbids mixed declarations and code [-Werror=pedantic]
+     item *it = c->item;
+     ^
+memcached.c: In function ‘append_bin_stats’:
+memcached.c:1731:9: error: ISO C90 forbids specifying subobject to initialize [-Werror=pedantic]
+         .response.magic = (uint8_t)PROTOCOL_BINARY_RES,
+         ^
+memcached.c:1732:9: error: ISO C90 forbids specifying subobject to initialize [-Werror=pedantic]
+         .response.opcode = PROTOCOL_BINARY_CMD_STAT,
+         ^
+memcached.c:1734:9: error: ISO C90 forbids specifying subobject to initialize [-Werror=pedantic]
+         .response.keylen = (uint16_t)tm_htons(klen),
+         ^
+memcached.c:1734:9: error: initializer element is not computable at load time [-Werror]
+memcached.c:1735:9: error: initializer element is not computable at load time [-Werror]
+         .response.datatype = (uint8_t)PROTOCOL_BINARY_RAW_BYTES,
+         ^
+memcached.c:1735:9: error: initializer element is not computable at load time [-Werror]
+memcached.c:1735:9: error: ISO C90 forbids specifying subobject to initialize [-Werror=pedantic]
+memcached.c:1736:9: error: initializer element is not computable at load time [-Werror]
+         .response.bodylen = htonl(bodylen),
+         ^
+memcached.c:1736:9: error: initializer element is not computable at load time [-Werror]
+memcached.c:1736:9: error: ISO C90 forbids specifying subobject to initialize [-Werror=pedantic]
+memcached.c:1736:9: error: initializer element is not computable at load time [-Werror]
+memcached.c:1737:9: error: initializer element is not computable at load time [-Werror]
+         .response.opaque = c->opaque
+         ^
+memcached.c:1737:9: error: initializer element is not computable at load time [-Werror]
+memcached.c:1737:9: error: initializer element is not computable at load time [-Werror]
+memcached.c:1737:9: error: ISO C90 forbids specifying subobject to initialize [-Werror=pedantic]
+memcached.c:1738:5: error: initializer element is not computable at load time [-Werror]
+     };
+     ^
+memcached.c:1738:5: error: initializer element is not computable at load time [-Werror]
+memcached.c:1738:5: error: initializer element is not computable at load time [-Werror]
+memcached.c:1738:5: error: initializer element is not computable at load time [-Werror]
+memcached.c:1738:5: error: initializer element is not computable at load time [-Werror]
+memcached.c: At top level:
+memcached.c:1782:54: error: ISO C90 does not support ‘long long’ [-Werror=long-long]
+ static void tm_snprintf_dad(char *str, unsigned long long val1)
+                                                      ^
+memcached.c: In function ‘append_ascii_stats’:
+memcached.c:1820:5: error: ISO C90 forbids mixed declarations and code [-Werror=pedantic]
+     char p[8192];
+     ^
+memcached.c: In function ‘append_stats’:
+memcached.c:1887:5: error: ISO C90 forbids mixed declarations and code [-Werror=pedantic]
+     conn *c = (conn*)cookie;
+     ^
+memcached.c: In function ‘bin_read_key’:
+memcached.c:1979:5: error: ISO C90 forbids mixed declarations and code [-Werror=pedantic]
+     ptrdiff_t offset = c->rcurr + sizeof(protocol_binary_request_header) - c->rbuf;
+     ^
+memcached.c:1993:13: error: ISO C90 forbids mixed declarations and code [-Werror=pedantic]
+             char *newm = realloc(c->rbuf, nsize);
+             ^
+memcached.c: In function ‘bin_list_sasl_mechs’:
+memcached.c:2063:5: error: ISO C90 forbids mixed declarations and code [-Werror=pedantic]
+     const char *result_string = NULL;
+     ^
+memcached.c: In function ‘process_bin_sasl_auth’:
+memcached.c:2093:5: error: ISO C90 forbids mixed declarations and code [-Werror=pedantic]
+     int nkey = c->binary_header.request.keylen;
+     ^
+memcached.c:2102:5: error: ISO C90 forbids mixed declarations and code [-Werror=pedantic]
+     char *key = binary_get_key(c);
+     ^
+memcached.c:2105:5: error: ISO C90 forbids mixed declarations and code [-Werror=pedantic]
+     item *it = item_alloc(key, nkey, 0, 0, vlen);
+     ^
+memcached.c: In function ‘process_bin_complete_sasl_auth’:
+memcached.c:2122:5: error: ISO C90 forbids mixed declarations and code [-Werror=pedantic]
+     const char *out = NULL;
+     ^
+memcached.c:2128:5: error: ISO C90 forbids mixed declarations and code [-Werror=pedantic]
+     int nkey = c->binary_header.request.keylen;
+     ^
+memcached.c:2131:5: error: ISO C90 forbids variable length array ‘mech’ [-Werror=vla]
+     char mech[nkey+1];
+     ^
+memcached.c:2138:5: error: ISO C90 forbids mixed declarations and code [-Werror=pedantic]
+     const char *challenge = vlen == 0 ? NULL : ITEM_data((item*) c->item);
+     ^
+memcached.c: In function ‘dsi_fprintf1’:
+memcached.c:2696:19: error: ISO C90 does not support ‘long long’ [-Werror=long-long]
+     unsigned long long *ulls = param;
+                   ^
+memcached.c:2697:5: error: ISO C90 does not support the ‘ll’ gnu_printf length modifier [-Werror=format=]
+     fprintf(stderr, "CAS:  failure: expected %llu, got %llu\n", ulls[0], ulls[1]);
+     ^
+memcached.c:2697:5: error: ISO C90 does not support the ‘ll’ gnu_printf length modifier [-Werror=format=]
+memcached.c: In function ‘do_store_item’:
+memcached.c:2752:31: error: ISO C90 does not support ‘long long’ [-Werror=long-long]
+                 unsigned long long* ulls = malloc(2*sizeof(unsigned long long));
+                               ^
+memcached.c:2752:74: error: ISO C90 does not support ‘long long’ [-Werror=long-long]
+                 unsigned long long* ulls = malloc(2*sizeof(unsigned long long));
+                                                                          ^
+memcached.c:2753:42: error: ISO C90 does not support ‘long long’ [-Werror=long-long]
+                 ulls[0] = (unsigned long long)ITEM_get_cas(old_it);
+                                          ^
+memcached.c:2754:42: error: ISO C90 does not support ‘long long’ [-Werror=long-long]
+                 ulls[1] = (unsigned long long)ITEM_get_cas(it);
+                                          ^
+memcached.c: At top level:
+memcached.c:2959:35: error: ISO C90 does not support ‘long long’ [-Werror=long-long]
+                     unsigned long long val)
+                                   ^
+memcached.c:3020:53: error: ISO C90 does not support ‘long long’ [-Werror=long-long]
+                      const char *fmt, unsigned long long val) {
+                                                     ^
+memcached.c: In function ‘append_stat_s’:
+memcached.c:3122:5: error: ISO C90 forbids mixed declarations and code [-Werror=pedantic]
+     char val_local[STAT_VAL_LEN];
+     ^
+memcached.c: In function ‘server_stats’:
+memcached.c:3178:5: error: ISO C90 forbids mixed declarations and code [-Werror=pedantic]
+     struct slab_stats slab_stats;
+     ^
+memcached.c:3182:5: error: ISO C90 forbids mixed declarations and code [-Werror=pedantic]
+     struct rusage usage;
+     ^
+memcached.c:3187:5: error: ISO C90 forbids mixed declarations and code [-Werror=pedantic]
+     const char *cached_event_get_version = event_get_version();
+     ^
+In file included from memcached.c:16:0:
+memcached.c:3217:72: error: ISO C90 does not support ‘long long’ [-Werror=long-long]
+         APPEND_STAT_LLU("rejected_connections", "%llu", (unsigned long long)stats.rejected_conns);
+                                                                        ^
+memcached.h:174:46: note: in definition of macro ‘APPEND_STAT_LLU’
+     append_stat_llu(name, add_stats, c, fmt, val);
+                                              ^
+memcached.c:3222:55: error: ISO C90 does not support ‘long long’ [-Werror=long-long]
+     APPEND_STAT_LLU("cmd_get", "%llu", (unsigned long long)thread_stats.get_cmds);
+                                                       ^
+memcached.h:174:46: note: in definition of macro ‘APPEND_STAT_LLU’
+     append_stat_llu(name, add_stats, c, fmt, val);
+                                              ^
+memcached.c:3223:55: error: ISO C90 does not support ‘long long’ [-Werror=long-long]
+     APPEND_STAT_LLU("cmd_set", "%llu", (unsigned long long)slab_stats.set_cmds);
+                                                       ^
+memcached.h:174:46: note: in definition of macro ‘APPEND_STAT_LLU’
+     append_stat_llu(name, add_stats, c, fmt, val);
+                                              ^
+memcached.c:3224:57: error: ISO C90 does not support ‘long long’ [-Werror=long-long]
+     APPEND_STAT_LLU("cmd_flush", "%llu", (unsigned long long)thread_stats.flush_cmds);
+                                                         ^
+memcached.h:174:46: note: in definition of macro ‘APPEND_STAT_LLU’
+     append_stat_llu(name, add_stats, c, fmt, val);
+                                              ^
+memcached.c:3225:57: error: ISO C90 does not support ‘long long’ [-Werror=long-long]
+     APPEND_STAT_LLU("cmd_touch", "%llu", (unsigned long long)thread_stats.touch_cmds);
+                                                         ^
+memcached.h:174:46: note: in definition of macro ‘APPEND_STAT_LLU’
+     append_stat_llu(name, add_stats, c, fmt, val);
+                                              ^
+memcached.c:3226:56: error: ISO C90 does not support ‘long long’ [-Werror=long-long]
+     APPEND_STAT_LLU("get_hits", "%llu", (unsigned long long)slab_stats.get_hits);
+                                                        ^
+memcached.h:174:46: note: in definition of macro ‘APPEND_STAT_LLU’
+     append_stat_llu(name, add_stats, c, fmt, val);
+                                              ^
+memcached.c:3227:58: error: ISO C90 does not support ‘long long’ [-Werror=long-long]
+     APPEND_STAT_LLU("get_misses", "%llu", (unsigned long long)thread_stats.get_misses);
+                                                          ^
+memcached.h:174:46: note: in definition of macro ‘APPEND_STAT_LLU’
+     append_stat_llu(name, add_stats, c, fmt, val);
+                                              ^
+memcached.c:3228:61: error: ISO C90 does not support ‘long long’ [-Werror=long-long]
+     APPEND_STAT_LLU("delete_misses", "%llu", (unsigned long long)thread_stats.delete_misses);
+                                                             ^
+memcached.h:174:46: note: in definition of macro ‘APPEND_STAT_LLU’
+     append_stat_llu(name, add_stats, c, fmt, val);
+                                              ^
+memcached.c:3229:59: error: ISO C90 does not support ‘long long’ [-Werror=long-long]
+     APPEND_STAT_LLU("delete_hits", "%llu", (unsigned long long)slab_stats.delete_hits);
+                                                           ^
+memcached.h:174:46: note: in definition of macro ‘APPEND_STAT_LLU’
+     append_stat_llu(name, add_stats, c, fmt, val);
+                                              ^
+memcached.c:3230:59: error: ISO C90 does not support ‘long long’ [-Werror=long-long]
+     APPEND_STAT_LLU("incr_misses", "%llu", (unsigned long long)thread_stats.incr_misses);
+                                                           ^
+memcached.h:174:46: note: in definition of macro ‘APPEND_STAT_LLU’
+     append_stat_llu(name, add_stats, c, fmt, val);
+                                              ^
+memcached.c:3231:57: error: ISO C90 does not support ‘long long’ [-Werror=long-long]
+     APPEND_STAT_LLU("incr_hits", "%llu", (unsigned long long)slab_stats.incr_hits);
+                                                         ^
+memcached.h:174:46: note: in definition of macro ‘APPEND_STAT_LLU’
+     append_stat_llu(name, add_stats, c, fmt, val);
+                                              ^
+memcached.c:3232:59: error: ISO C90 does not support ‘long long’ [-Werror=long-long]
+     APPEND_STAT_LLU("decr_misses", "%llu", (unsigned long long)thread_stats.decr_misses);
+                                                           ^
+memcached.h:174:46: note: in definition of macro ‘APPEND_STAT_LLU’
+     append_stat_llu(name, add_stats, c, fmt, val);
+                                              ^
+memcached.c:3233:57: error: ISO C90 does not support ‘long long’ [-Werror=long-long]
+     APPEND_STAT_LLU("decr_hits", "%llu", (unsigned long long)slab_stats.decr_hits);
+                                                         ^
+memcached.h:174:46: note: in definition of macro ‘APPEND_STAT_LLU’
+     append_stat_llu(name, add_stats, c, fmt, val);
+                                              ^
+memcached.c:3234:58: error: ISO C90 does not support ‘long long’ [-Werror=long-long]
+     APPEND_STAT_LLU("cas_misses", "%llu", (unsigned long long)thread_stats.cas_misses);
+                                                          ^
+memcached.h:174:46: note: in definition of macro ‘APPEND_STAT_LLU’
+     append_stat_llu(name, add_stats, c, fmt, val);
+                                              ^
+memcached.c:3235:56: error: ISO C90 does not support ‘long long’ [-Werror=long-long]
+     APPEND_STAT_LLU("cas_hits", "%llu", (unsigned long long)slab_stats.cas_hits);
+                                                        ^
+memcached.h:174:46: note: in definition of macro ‘APPEND_STAT_LLU’
+     append_stat_llu(name, add_stats, c, fmt, val);
+                                              ^
+memcached.c:3236:58: error: ISO C90 does not support ‘long long’ [-Werror=long-long]
+     APPEND_STAT_LLU("cas_badval", "%llu", (unsigned long long)slab_stats.cas_badval);
+                                                          ^
+memcached.h:174:46: note: in definition of macro ‘APPEND_STAT_LLU’
+     append_stat_llu(name, add_stats, c, fmt, val);
+                                              ^
+memcached.c:3237:58: error: ISO C90 does not support ‘long long’ [-Werror=long-long]
+     APPEND_STAT_LLU("touch_hits", "%llu", (unsigned long long)slab_stats.touch_hits);
+                                                          ^
+memcached.h:174:46: note: in definition of macro ‘APPEND_STAT_LLU’
+     append_stat_llu(name, add_stats, c, fmt, val);
+                                              ^
+memcached.c:3238:60: error: ISO C90 does not support ‘long long’ [-Werror=long-long]
+     APPEND_STAT_LLU("touch_misses", "%llu", (unsigned long long)thread_stats.touch_misses);
+                                                            ^
+memcached.h:174:46: note: in definition of macro ‘APPEND_STAT_LLU’
+     append_stat_llu(name, add_stats, c, fmt, val);
+                                              ^
+memcached.c:3239:57: error: ISO C90 does not support ‘long long’ [-Werror=long-long]
+     APPEND_STAT_LLU("auth_cmds", "%llu", (unsigned long long)thread_stats.auth_cmds);
+                                                         ^
+memcached.h:174:46: note: in definition of macro ‘APPEND_STAT_LLU’
+     append_stat_llu(name, add_stats, c, fmt, val);
+                                              ^
+memcached.c:3240:59: error: ISO C90 does not support ‘long long’ [-Werror=long-long]
+     APPEND_STAT_LLU("auth_errors", "%llu", (unsigned long long)thread_stats.auth_errors);
+                                                           ^
+memcached.h:174:46: note: in definition of macro ‘APPEND_STAT_LLU’
+     append_stat_llu(name, add_stats, c, fmt, val);
+                                              ^
+memcached.c:3241:58: error: ISO C90 does not support ‘long long’ [-Werror=long-long]
+     APPEND_STAT_LLU("bytes_read", "%llu", (unsigned long long)thread_stats.bytes_read);
+                                                          ^
+memcached.h:174:46: note: in definition of macro ‘APPEND_STAT_LLU’
+     append_stat_llu(name, add_stats, c, fmt, val);
+                                              ^
+memcached.c:3242:61: error: ISO C90 does not support ‘long long’ [-Werror=long-long]
+     APPEND_STAT_LLU("bytes_written", "%llu", (unsigned long long)thread_stats.bytes_written);
+                                                             ^
+memcached.h:174:46: note: in definition of macro ‘APPEND_STAT_LLU’
+     append_stat_llu(name, add_stats, c, fmt, val);
+                                              ^
+memcached.c:3243:62: error: ISO C90 does not support ‘long long’ [-Werror=long-long]
+     APPEND_STAT_LLU("limit_maxbytes", "%llu", (unsigned long long)settings.maxbytes);
+                                                              ^
+memcached.h:174:46: note: in definition of macro ‘APPEND_STAT_LLU’
+     append_stat_llu(name, add_stats, c, fmt, val);
+                                              ^
+memcached.c:3245:67: error: ISO C90 does not support ‘long long’ [-Werror=long-long]
+     APPEND_STAT_LLU("listen_disabled_num", "%llu", (unsigned long long)stats.listen_disabled_num);
+                                                                   ^
+memcached.h:174:46: note: in definition of macro ‘APPEND_STAT_LLU’
+     append_stat_llu(name, add_stats, c, fmt, val);
+                                              ^
+memcached.c:3247:59: error: ISO C90 does not support ‘long long’ [-Werror=long-long]
+     APPEND_STAT_LLU("conn_yields", "%llu", (unsigned long long)thread_stats.conn_yields);
+                                                           ^
+memcached.h:174:46: note: in definition of macro ‘APPEND_STAT_LLU’
+     append_stat_llu(name, add_stats, c, fmt, val);
+                                              ^
+memcached.c:3249:58: error: ISO C90 does not support ‘long long’ [-Werror=long-long]
+     APPEND_STAT_LLU("hash_bytes", "%llu", (unsigned long long)stats.hash_bytes);
+                                                          ^
+memcached.h:174:46: note: in definition of macro ‘APPEND_STAT_LLU’
+     append_stat_llu(name, add_stats, c, fmt, val);
+                                              ^
+memcached.c: In function ‘process_get_command’:
+memcached.c:3438:60: error: ISO C90 does not support ‘long long’ [-Werror=long-long]
+                                             (unsigned long long)ITEM_get_cas(it));
+                                                            ^
+memcached.c:3438:45: error: ISO C90 does not support the ‘ll’ gnu_printf length modifier [-Werror=format=]
+                                             (unsigned long long)ITEM_get_cas(it));
+                                             ^
+memcached.c:3438:45: error: ISO C90 does not support the ‘ll’ gnu_printf length modifier [-Werror=format=]
+memcached.c:3436:19: error: ISO C90 forbids mixed declarations and code [-Werror=pedantic]
+                   int suffix_len = snprintf(suffix, SUFFIX_SIZE,
+                   ^
+memcached.c: In function ‘do_add_delta’:
+memcached.c:3768:41: error: ISO C90 does not support ‘long long’ [-Werror=long-long]
+     tm_snprintf_dad(buf, (unsigned long long)value);
+                                         ^
+memcached.c: In function ‘try_read_command’:
+memcached.c:4103:13: error: ISO C90 forbids mixed declarations and code [-Werror=pedantic]
+             protocol_binary_request_header* req;
+             ^
+memcached.c: In function ‘try_read_network’:
+memcached.c:4267:13: error: ISO C90 forbids mixed declarations and code [-Werror=pedantic]
+             char *new_rbuf = realloc(c->rbuf, c->rsize * 2);
+             ^
+memcached.c:4280:9: error: ISO C90 forbids mixed declarations and code [-Werror=pedantic]
+         int avail = c->rsize - c->rbytes;
+         ^
+memcached.c: In function ‘update_event’:
+memcached.c:4311:5: error: ISO C90 forbids mixed declarations and code [-Werror=pedantic]
+     struct event_base *base = c->event.ev_base;
+     ^
+memcached.c: In function ‘server_socket’:
+memcached.c:4836:31: error: ISO C90 forbids specifying subobject to initialize [-Werror=pedantic]
+     struct addrinfo hints = { .ai_flags = AI_PASSIVE,
+                               ^
+memcached.c:4837:31: error: ISO C90 forbids specifying subobject to initialize [-Werror=pedantic]
+                               .ai_family = AF_UNSPEC };
+                               ^
+memcached.c: In function ‘server_sockets’:
+memcached.c:4979:9: error: ‘for’ loop initial declarations are only allowed in C99 or C11 mode
+         for (char *p = strtok_r(list, ";,", &b);
+         ^
+memcached.c:4979:9: note: use option -std=c99, -std=gnu99, -std=c11 or -std=gnu11 to compile your code
+memcached.c: In function ‘clock_handler’:
+memcached.c:5097:25: error: ISO C90 forbids specifying subobject to initialize [-Werror=pedantic]
+     struct timeval t = {.tv_sec = 1, .tv_usec = 0};
+                         ^
+memcached.c:5097:38: error: ISO C90 forbids specifying subobject to initialize [-Werror=pedantic]
+     struct timeval t = {.tv_sec = 1, .tv_usec = 0};
+                                      ^
+memcached.c:5112:9: error: ISO C90 forbids mixed declarations and code [-Werror=pedantic]
+         struct timespec ts;
+         ^
+memcached.c: In function ‘usage’:
+memcached.c:5173:12: error: string length ‘1807’ is greater than the length ‘509’ ISO C90 compilers are required to support [-Werror=overlength-strings]
+            "-n <bytes>    minimum space allocated for key+value+flags (default: 48)\n");
+            ^
+memcached.c: In function ‘usage_license’:
+memcached.c:5273:5: error: string length ‘3202’ is greater than the length ‘509’ ISO C90 compilers are required to support [-Werror=overlength-strings]
+     );
+     ^
+memcached.c: In function ‘main’:
+memcached.c:5427:9: error: ISO C90 forbids specifying subobject to initialize [-Werror=pedantic]
+         [MAXCONNS_FAST] = "maxconns_fast",
+         ^
+memcached.c:5428:9: error: ISO C90 forbids specifying subobject to initialize [-Werror=pedantic]
+         [HASHPOWER_INIT] = "hashpower",
+         ^
+memcached.c:5429:9: error: ISO C90 forbids specifying subobject to initialize [-Werror=pedantic]
+         [SLAB_REASSIGN] = "slab_reassign",
+         ^
+memcached.c:5430:9: error: ISO C90 forbids specifying subobject to initialize [-Werror=pedantic]
+         [SLAB_AUTOMOVE] = "slab_automove",
+         ^
+cc1: all warnings being treated as errors
+make[2]: *** [memcached-memcached.o] Error 1
+make[2]: Leaving directory `/memcached/tm_memcached/SI_version'
+make[1]: *** [all-recursive] Error 1
+make[1]: Leaving directory `/memcached/tm_memcached/SI_version'
+make: *** [all] Error 2

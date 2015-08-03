@@ -1,0 +1,650 @@
+assoc.c:/* -*- Mode: C; tab-width: 4; c-basic-offset: 4; indent-tabs-mode: nil -*- */
+cache.c:/* -*- Mode: C; tab-width: 4; c-basic-offset: 4; indent-tabs-mode: nil -*- */
+hash.c:/* -*- Mode: C; tab-width: 4; c-basic-offset: 4; indent-tabs-mode: nil -*- */
+items.c:/* -*- Mode: C; tab-width: 4; c-basic-offset: 4; indent-tabs-mode: nil -*- */
+memcached.c:/* -*- Mode: C; tab-width: 4; c-basic-offset: 4; indent-tabs-mode: nil -*- */
+memcached.c://#include "/memcached/gcc-4.9.2/libitm/libitm.h"
+memcached.c:// https://www.student.cs.uwaterloo.ca/~cs350/common/os161-src-html/memcpy_8c-source.html
+memcached.c:// https://www.student.cs.uwaterloo.ca/~cs350/common/os161-src-html/strlen_8c-source.html
+memcached.c:// This code taken from http://clc-wiki.net/wiki/strchr
+memcached.c:    TRANSMIT_HARD_ERROR  /** Can't write (c->state is set to conn_closing) */
+memcached.c:    if (c->msgsize == c->msgused) {
+memcached.c:        msg = excitevm_srealloc(c->msglist, c->msgsize * 2 * sizeof(struct msghdr));
+memcached.c:        c->msglist = msg;
+memcached.c:        c->msgsize *= 2;
+memcached.c:    msg = c->msglist + c->msgused;
+memcached.c:    msg->msg_iov = &c->iov[c->iovused];
+memcached.c:    if (c->request_addr_size > 0) {
+memcached.c:        msg->msg_name = &c->request_addr;
+memcached.c:        msg->msg_namelen = c->request_addr_size;
+memcached.c:    c->msgbytes = 0;
+memcached.c:    c->msgused++;
+memcached.c:    if (IS_UDP(c->transport)) {
+memcached.c:        c->rbuf = c->wbuf = 0;
+memcached.c:        c->ilist = 0;
+memcached.c:        c->suffixlist = 0;
+memcached.c:        c->iov = 0;
+memcached.c:        c->msglist = 0;
+memcached.c:        c->hdrbuf = 0;
+memcached.c:        c->rsize = read_buffer_size;
+memcached.c:        c->wsize = DATA_BUFFER_SIZE;
+memcached.c:        c->isize = ITEM_LIST_INITIAL;
+memcached.c:        c->suffixsize = SUFFIX_LIST_INITIAL;
+memcached.c:        c->iovsize = IOV_LIST_INITIAL;
+memcached.c:        c->msgsize = MSG_LIST_INITIAL;
+memcached.c:        c->hdrsize = 0;
+memcached.c:        c->rbuf = (char *)malloc((size_t)c->rsize);
+memcached.c:        c->wbuf = (char *)malloc((size_t)c->wsize);
+memcached.c:        c->ilist = (item **)excitevm_smalloc(sizeof(item *) * c->isize);
+memcached.c:        c->suffixlist = (char **)excitevm_smalloc(sizeof(char *) * c->suffixsize);
+memcached.c:        c->iov = (struct iovec *)/*excitevm_s*/malloc(sizeof(struct iovec) * c->iovsize);
+memcached.c:        c->msglist = (struct msghdr *)/*excitevm_s*/malloc(sizeof(struct msghdr) * c->msgsize);
+memcached.c:        if (c->rbuf == 0 || c->wbuf == 0 || c->ilist == 0 || c->iov == 0 ||
+memcached.c:                c->msglist == 0 || c->suffixlist == 0) {
+memcached.c:    c->transport = transport;
+memcached.c:    c->protocol = settings.binding_protocol;
+memcached.c:        c->request_addr_size = sizeof(c->request_addr);
+memcached.c:        c->request_addr_size = 0;
+memcached.c:                prot_text(c->protocol));
+memcached.c:        } else if (c->protocol == negotiating_prot) {
+memcached.c:        } else if (c->protocol == ascii_prot) {
+memcached.c:        } else if (c->protocol == binary_prot) {
+memcached.c:                sfd, c->protocol);
+memcached.c:    c->sfd = sfd;
+memcached.c:    c->state = init_state;
+memcached.c:    c->rlbytes = 0;
+memcached.c:    c->cmd = -1;
+memcached.c:    c->rbytes = c->wbytes = 0;
+memcached.c:    c->wcurr = c->wbuf;
+memcached.c:    c->rcurr = c->rbuf;
+memcached.c:    c->ritem = 0;
+memcached.c:    c->icurr = c->ilist;
+memcached.c:    c->suffixcurr = c->suffixlist;
+memcached.c:    c->ileft = 0;
+memcached.c:    c->suffixleft = 0;
+memcached.c:    c->iovused = 0;
+memcached.c:    c->msgcurr = 0;
+memcached.c:    c->msgused = 0;
+memcached.c:    c->write_and_go = init_state;
+memcached.c:    c->write_and_free = 0;
+memcached.c:    c->item = 0;
+memcached.c:    c->noreply = false;
+memcached.c:    event_set(&c->event, sfd, event_flags, event_handler, (void *)c);
+memcached.c:    event_base_set(base, &c->event);
+memcached.c:    c->ev_flags = event_flags;
+memcached.c:    if (event_add(&c->event, 0) == -1) {
+memcached.c:    MEMCACHED_CONN_ALLOCATE(c->sfd);
+memcached.c:    if (c->item) {
+memcached.c:        item_remove(c->item);
+memcached.c:        c->item = 0;
+memcached.c:    if (c->ileft != 0) {
+memcached.c:        for (; c->ileft > 0; c->ileft--,c->icurr++) {
+memcached.c:            item_remove(*(c->icurr));
+memcached.c:    if (c->suffixleft != 0) {
+memcached.c:        for (; c->suffixleft > 0; c->suffixleft--, c->suffixcurr++) {
+memcached.c:            cache_free(c->thread->suffix_cache, *(c->suffixcurr));
+memcached.c:    if (c->write_and_free) {
+memcached.c:         excitevm_sfree(c->write_and_free);
+memcached.c:        c->write_and_free = 0;
+memcached.c:    if (c->sasl_conn) {
+memcached.c:        sasl_dispose(&c->sasl_conn);
+memcached.c:        c->sasl_conn = NULL;
+memcached.c:    if (IS_UDP(c->transport)) {
+memcached.c:        if (c->hdrbuf)
+memcached.c:             excitevm_sfree(c->hdrbuf);
+memcached.c:        if (c->msglist)
+memcached.c:             excitevm_sfree(c->msglist);
+memcached.c:        if (c->rbuf)
+memcached.c:             excitevm_sfree(c->rbuf);
+memcached.c:        if (c->wbuf)
+memcached.c:             excitevm_sfree(c->wbuf);
+memcached.c:        if (c->ilist)
+memcached.c:             excitevm_sfree(c->ilist);
+memcached.c:        if (c->suffixlist)
+memcached.c:             excitevm_sfree(c->suffixlist);
+memcached.c:        if (c->iov)
+memcached.c:             excitevm_sfree(c->iov);
+memcached.c:    event_del(&c->event);
+memcached.c:        fprintf(stderr, "<%d connection closed.\n", c->sfd);
+memcached.c:    MEMCACHED_CONN_RELEASE(c->sfd);
+memcached.c:    close(c->sfd);
+memcached.c:    if (c->rsize > READ_BUFFER_HIGHWAT || conn_add_to_freelist(c)) {
+memcached.c:    if (IS_UDP(c->transport))
+memcached.c:    if (c->rsize > READ_BUFFER_HIGHWAT && c->rbytes < DATA_BUFFER_SIZE) {
+memcached.c:        if (c->rcurr != c->rbuf)
+memcached.c:            memmove(c->rbuf, c->rcurr, (size_t)c->rbytes);
+memcached.c:        newbuf = (char *)excitevm_srealloc((void *)c->rbuf, DATA_BUFFER_SIZE);
+memcached.c:            c->rbuf = newbuf;
+memcached.c:            c->rsize = DATA_BUFFER_SIZE;
+memcached.c:        c->rcurr = c->rbuf;
+memcached.c:    if (c->isize > ITEM_LIST_HIGHWAT) {
+memcached.c:        item **newbuf = (item**) excitevm_srealloc((void *)c->ilist, ITEM_LIST_INITIAL * sizeof(c->ilist[0]));
+memcached.c:            c->ilist = newbuf;
+memcached.c:            c->isize = ITEM_LIST_INITIAL;
+memcached.c:    if (c->msgsize > MSG_LIST_HIGHWAT) {
+memcached.c:        struct msghdr *newbuf = (struct msghdr *) excitevm_srealloc((void *)c->msglist, MSG_LIST_INITIAL * sizeof(c->msglist[0]));
+memcached.c:            c->msglist = newbuf;
+memcached.c:            c->msgsize = MSG_LIST_INITIAL;
+memcached.c:    if (c->iovsize > IOV_LIST_HIGHWAT) {
+memcached.c:        struct iovec *newbuf = (struct iovec *) excitevm_srealloc((void *)c->iov, IOV_LIST_INITIAL * sizeof(c->iov[0]));
+memcached.c:            c->iov = newbuf;
+memcached.c:            c->iovsize = IOV_LIST_INITIAL;
+memcached.c:    if (state != c->state) {
+memcached.c:                    c->sfd, state_text(c->state),
+memcached.c:            MEMCACHED_PROCESS_COMMAND_END(c->sfd, c->wbuf, c->wbytes);
+memcached.c:        c->state = state;
+memcached.c:    if (c->iovused >= c->iovsize) {
+memcached.c:        struct iovec *new_iov = (struct iovec *)excitevm_srealloc(c->iov,
+memcached.c:                                (c->iovsize * 2) * sizeof(struct iovec));
+memcached.c:        c->iov = new_iov;
+memcached.c:        c->iovsize *= 2;
+memcached.c:        for (i = 0, iovnum = 0; i < c->msgused; i++) {
+memcached.c:            c->msglist[i].msg_iov = &c->iov[iovnum];
+memcached.c:            iovnum += c->msglist[i].msg_iovlen;
+memcached.c:        m = &c->msglist[c->msgused - 1];
+memcached.c:        limit_to_mtu = IS_UDP(c->transport) || (1 == c->msgused);
+memcached.c:            (limit_to_mtu && c->msgbytes >= UDP_MAX_PAYLOAD_SIZE)) {
+memcached.c:            m = &c->msglist[c->msgused - 1];
+memcached.c:        if (limit_to_mtu && len + c->msgbytes > UDP_MAX_PAYLOAD_SIZE) {
+memcached.c:            leftover = len + c->msgbytes - UDP_MAX_PAYLOAD_SIZE;
+memcached.c:        m = &c->msglist[c->msgused - 1];
+memcached.c:        c->msgbytes += len;
+memcached.c:        c->iovused++;
+memcached.c:    if (c->msgused > c->hdrsize) {
+memcached.c:        if (c->hdrbuf)
+memcached.c:            new_hdrbuf = excitevm_srealloc(c->hdrbuf, c->msgused * 2 * UDP_HEADER_SIZE);
+memcached.c:            new_hdrbuf = excitevm_smalloc(c->msgused * 2 * UDP_HEADER_SIZE);
+memcached.c:        c->hdrbuf = (unsigned char *)new_hdrbuf;
+memcached.c:        c->hdrsize = c->msgused * 2;
+memcached.c:    hdr = c->hdrbuf;
+memcached.c:    for (i = 0; i < c->msgused; i++) {
+memcached.c:        c->msglist[i].msg_iov[0].iov_base = (void*)hdr;
+memcached.c:        c->msglist[i].msg_iov[0].iov_len = UDP_HEADER_SIZE;
+memcached.c:        *hdr++ = c->request_id / 256;
+memcached.c:        *hdr++ = c->request_id % 256;
+memcached.c:        *hdr++ = c->msgused / 256;
+memcached.c:        *hdr++ = c->msgused % 256;
+memcached.c:        assert((void *) hdr == (caddr_t)c->msglist[i].msg_iov[0].iov_base + UDP_HEADER_SIZE);
+memcached.c:    if (c->noreply) {
+memcached.c:            fprintf(stderr, ">%d NOREPLY %s\n", c->sfd, str);
+memcached.c:        c->noreply = false;
+memcached.c:        fprintf(stderr, ">%d %s\n", c->sfd, str);
+memcached.c:    c->msgcurr = 0;
+memcached.c:    c->msgused = 0;
+memcached.c:    c->iovused = 0;
+memcached.c:    if ((len + 2) > c->wsize) {
+memcached.c:    memcpy(c->wbuf, str, len);
+memcached.c:    memcpy(c->wbuf + len, "\r\n", 2);
+memcached.c:    c->wbytes = len + 2;
+memcached.c:    c->wcurr = c->wbuf;
+memcached.c:    c->write_and_go = conn_new_cmd;
+memcached.c: * has been stored in c->cmd, and the item is ready in c->item.
+memcached.c:    item *it = c->item;
+memcached.c:    int comm = c->cmd;
+memcached.c:    c->thread->stats.slab_stats[it->slabs_clsid].set_cmds++;
+memcached.c:      switch (c->cmd) {
+memcached.c:          MEMCACHED_COMMAND_ADD(c->sfd, ITEM_key(it), it->nkey,
+memcached.c:          MEMCACHED_COMMAND_REPLACE(c->sfd, ITEM_key(it), it->nkey,
+memcached.c:          MEMCACHED_COMMAND_APPEND(c->sfd, ITEM_key(it), it->nkey,
+memcached.c:          MEMCACHED_COMMAND_PREPEND(c->sfd, ITEM_key(it), it->nkey,
+memcached.c:          MEMCACHED_COMMAND_SET(c->sfd, ITEM_key(it), it->nkey,
+memcached.c:          MEMCACHED_COMMAND_CAS(c->sfd, ITEM_key(it), it->nkey, it->nbytes,
+memcached.c:    item_remove(c->item);       /* release the c->item reference */
+memcached.c:    c->item = 0;
+memcached.c:    char *ret = c->rcurr;
+memcached.c:    ret -= (sizeof(c->binary_header) + c->binary_header.request.keylen +
+memcached.c:            c->binary_header.request.extlen);
+memcached.c:    assert(ret >= c->rbuf);
+memcached.c:    return c->rcurr - (c->binary_header.request.keylen);
+memcached.c:    c->msgcurr = 0;
+memcached.c:    c->msgused = 0;
+memcached.c:    c->iovused = 0;
+memcached.c:    header = (protocol_binary_response_header *)c->wbuf;
+memcached.c:    header->response.opcode = c->binary_header.request.opcode;
+memcached.c:    header->response.opaque = c->opaque;
+memcached.c:    header->response.cas = htonll(c->cas);
+memcached.c:        fprintf(stderr, ">%d Writing bin response:", c->sfd);
+memcached.c:                fprintf(stderr, "\n>%d  ", c->sfd);
+memcached.c:    add_iov(c, c->wbuf, sizeof(header->response));
+memcached.c:        fprintf(stderr, ">%d UNHANDLED ERROR: %d\n", c->sfd, err);
+memcached.c:        fprintf(stderr, ">%d Writing an error: %s\n", c->sfd, errstr);
+memcached.c:        c->sbytes = swallow;
+memcached.c:        c->write_and_go = conn_swallow;
+memcached.c:        c->write_and_go = conn_new_cmd;
+memcached.c:    if (!c->noreply || c->cmd == PROTOCOL_BINARY_CMD_GET ||
+memcached.c:        c->cmd == PROTOCOL_BINARY_CMD_GETK) {
+memcached.c:        c->write_and_go = conn_new_cmd;
+memcached.c:    protocol_binary_response_incr* rsp = (protocol_binary_response_incr*)c->wbuf;
+memcached.c:    assert(c->wsize >= sizeof(*rsp));
+memcached.c:    nkey = c->binary_header.request.keylen;
+memcached.c:    if (c->binary_header.request.cas != 0) {
+memcached.c:        cas = c->binary_header.request.cas;
+memcached.c:    switch(add_delta(c, key, nkey, c->cmd == PROTOCOL_BINARY_CMD_INCREMENT,
+memcached.c:            c->cas = cas;
+memcached.c:                    c->cas = ITEM_get_cas(it);
+memcached.c:            if (c->cmd == PROTOCOL_BINARY_CMD_INCREMENT) {
+memcached.c:                c->thread->stats.incr_misses++;
+memcached.c:                c->thread->stats.decr_misses++;
+memcached.c:    item *it = c->item;
+memcached.c:    c->thread->stats.slab_stats[it->slabs_clsid].set_cmds++;
+memcached.c:    ret = store_item(it, c->cmd, c);
+memcached.c:    switch (c->cmd) {
+memcached.c:        MEMCACHED_COMMAND_ADD(c->sfd, ITEM_key(it), it->nkey,
+memcached.c:        MEMCACHED_COMMAND_REPLACE(c->sfd, ITEM_key(it), it->nkey,
+memcached.c:        MEMCACHED_COMMAND_APPEND(c->sfd, ITEM_key(it), it->nkey,
+memcached.c:        MEMCACHED_COMMAND_PREPEND(c->sfd, ITEM_key(it), it->nkey,
+memcached.c:        MEMCACHED_COMMAND_SET(c->sfd, ITEM_key(it), it->nkey,
+memcached.c:        if (c->cmd == NREAD_ADD) {
+memcached.c:        } else if(c->cmd == NREAD_REPLACE) {
+memcached.c:    item_remove(c->item);       /* release the c->item reference */
+memcached.c:    c->item = 0;
+memcached.c:    protocol_binary_response_get* rsp = (protocol_binary_response_get*)c->wbuf;
+memcached.c:    size_t nkey = c->binary_header.request.keylen;
+memcached.c:        fprintf(stderr, "<%d TOUCH ", c->sfd);
+memcached.c:        c->thread->stats.touch_cmds++;
+memcached.c:        c->thread->stats.slab_stats[it->slabs_clsid].touch_hits++;
+memcached.c:        MEMCACHED_COMMAND_TOUCH(c->sfd, ITEM_key(it), it->nkey,
+memcached.c:        if (c->cmd == PROTOCOL_BINARY_CMD_TOUCH) {
+memcached.c:        } else if (c->cmd == PROTOCOL_BINARY_CMD_GATK) {
+memcached.c:        if (c->cmd == PROTOCOL_BINARY_CMD_GATK) {
+memcached.c:        if (c->cmd != PROTOCOL_BINARY_CMD_TOUCH) {
+memcached.c:        c->write_and_go = conn_new_cmd;
+memcached.c:        c->item = it;
+memcached.c:        c->thread->stats.touch_cmds++;
+memcached.c:        c->thread->stats.touch_misses++;
+memcached.c:        MEMCACHED_COMMAND_TOUCH(c->sfd, key, nkey, -1, 0);
+memcached.c:        if (c->noreply) {
+memcached.c:            if (c->cmd == PROTOCOL_BINARY_CMD_GATK) {
+memcached.c:                char *ofs = c->wbuf + sizeof(protocol_binary_response_header);
+memcached.c:                c->write_and_go = conn_new_cmd;
+memcached.c:    protocol_binary_response_get* rsp = (protocol_binary_response_get*)c->wbuf;
+memcached.c:    size_t nkey = c->binary_header.request.keylen;
+memcached.c:        fprintf(stderr, "<%d GET ", c->sfd);
+memcached.c:        c->thread->stats.get_cmds++;
+memcached.c:        c->thread->stats.slab_stats[it->slabs_clsid].get_hits++;
+memcached.c:        MEMCACHED_COMMAND_GET(c->sfd, ITEM_key(it), it->nkey,
+memcached.c:        if (c->cmd == PROTOCOL_BINARY_CMD_GETK) {
+memcached.c:        if (c->cmd == PROTOCOL_BINARY_CMD_GETK) {
+memcached.c:        c->write_and_go = conn_new_cmd;
+memcached.c:        c->item = it;
+memcached.c:        c->thread->stats.get_cmds++;
+memcached.c:        c->thread->stats.get_misses++;
+memcached.c:        MEMCACHED_COMMAND_GET(c->sfd, key, nkey, -1, 0);
+memcached.c:        if (c->noreply) {
+memcached.c:            if (c->cmd == PROTOCOL_BINARY_CMD_GETK) {
+memcached.c:                char *ofs = c->wbuf + sizeof(protocol_binary_response_header);
+memcached.c:                c->write_and_go = conn_new_cmd;
+memcached.c:    char *buf = c->stats.buffer + c->stats.offset;
+memcached.c:        .response.opaque = c->opaque
+memcached.c:    c->stats.offset += sizeof(header.response) + bodylen;
+memcached.c:    char *pos = c->stats.buffer + c->stats.offset;
+memcached.c:    int remaining = c->stats.size - c->stats.offset;
+memcached.c:    c->stats.offset += nbytes;
+memcached.c:    size_t nsize = c->stats.size;
+memcached.c:    size_t available = nsize - c->stats.offset;
+memcached.c:    if (c->stats.buffer == NULL) {
+memcached.c:        available = c->stats.size = c->stats.offset = 0;
+memcached.c:        available = nsize - c->stats.offset;
+memcached.c:    if (nsize != c->stats.size) {
+memcached.c:        //              the old size.  It appears to be c->stats_size...
+memcached.c:        char *ptr = tm_realloc(c->stats.buffer, nsize, c->stats.size);
+memcached.c:            c->stats.buffer = ptr;
+memcached.c:            c->stats.size = nsize;
+memcached.c:    if (c->protocol == binary_prot) {
+memcached.c:    tm_assert(c->stats.offset <= c->stats.size);
+memcached.c:    size_t nkey = c->binary_header.request.keylen;
+memcached.c:        fprintf(stderr, "<%d STATS ", c->sfd);
+memcached.c:            if (c->stats.buffer == NULL) {
+memcached.c:                write_and_free(c, c->stats.buffer, c->stats.offset);
+memcached.c:                c->stats.buffer = NULL;
+memcached.c:    if (c->stats.buffer == NULL) {
+memcached.c:        write_and_free(c, c->stats.buffer, c->stats.offset);
+memcached.c:        c->stats.buffer = NULL;
+memcached.c:    c->substate = next_substate;
+memcached.c:    c->rlbytes = c->keylen + extra;
+memcached.c:    ptrdiff_t offset = c->rcurr + sizeof(protocol_binary_request_header) - c->rbuf;
+memcached.c:    if (c->rlbytes > c->rsize - offset) {
+memcached.c:        size_t nsize = c->rsize;
+memcached.c:        size_t size = c->rlbytes + sizeof(protocol_binary_request_header);
+memcached.c:        if (nsize != c->rsize) {
+memcached.c:                        c->sfd, (unsigned long)c->rsize, (unsigned long)nsize);
+memcached.c:            char *newm = excitevm_srealloc(c->rbuf, nsize);
+memcached.c:                            c->sfd);
+memcached.c:            c->rbuf= newm;
+memcached.c:            c->rcurr = c->rbuf + offset - sizeof(protocol_binary_request_header);
+memcached.c:            c->rsize = nsize;
+memcached.c:        if (c->rbuf != c->rcurr) {
+memcached.c:            memmove(c->rbuf, c->rcurr, c->rbytes);
+memcached.c:            c->rcurr = c->rbuf;
+memcached.c:                fprintf(stderr, "%d: Repack input buffer\n", c->sfd);
+memcached.c:    c->ritem = c->rcurr + sizeof(protocol_binary_request_header);
+memcached.c:                c->binary_header.request.opcode, c->sfd);
+memcached.c:    c->write_and_go = conn_closing;
+memcached.c:    if (!c->sasl_conn) {
+memcached.c:                                   NULL, 0, &c->sasl_conn);
+memcached.c:            c->sasl_conn = NULL;
+memcached.c:                        c->binary_header.request.bodylen
+memcached.c:                        - c->binary_header.request.keylen);
+memcached.c:    int result=sasl_listmech(c->sasl_conn, NULL,
+memcached.c:                        c->binary_header.request.bodylen
+memcached.c:                        - c->binary_header.request.keylen);
+memcached.c:    assert(c->binary_header.request.extlen == 0);
+memcached.c:    int nkey = c->binary_header.request.keylen;
+memcached.c:    int vlen = c->binary_header.request.bodylen - nkey;
+memcached.c:        c->write_and_go = conn_swallow;
+memcached.c:        c->write_and_go = conn_swallow;
+memcached.c:    c->item = it;
+memcached.c:    c->ritem = ITEM_data(it);
+memcached.c:    c->rlbytes = vlen;
+memcached.c:    c->substate = bin_reading_sasl_auth_data;
+memcached.c:    assert(c->item);
+memcached.c:    int nkey = c->binary_header.request.keylen;
+memcached.c:    int vlen = c->binary_header.request.bodylen - nkey;
+memcached.c:    memcpy(mech, ITEM_key((item*)c->item), nkey);
+memcached.c:    const char *challenge = vlen == 0 ? NULL : ITEM_data((item*) c->item);
+memcached.c:    switch (c->cmd) {
+memcached.c:        result = sasl_server_start(c->sasl_conn, mech,
+memcached.c:        result = sasl_server_step(c->sasl_conn,
+memcached.c:                    c->cmd, challenge);
+memcached.c:    item_unlink(c->item);
+memcached.c:        c->thread->stats.auth_cmds++;
+memcached.c:        c->write_and_go = conn_new_cmd;
+memcached.c:        c->thread->stats.auth_cmds++;
+memcached.c:        c->thread->stats.auth_errors++;
+memcached.c:    switch (c->cmd) {
+memcached.c:        if (c->sasl_conn) {
+memcached.c:            sasl_getprop(c->sasl_conn, SASL_USERNAME, &uname);
+memcached.c:                c->cmd, rv ? "true" : "false");
+memcached.c:    int extlen = c->binary_header.request.extlen;
+memcached.c:    int keylen = c->binary_header.request.keylen;
+memcached.c:    uint32_t bodylen = c->binary_header.request.bodylen;
+memcached.c:        c->write_and_go = conn_closing;
+memcached.c:    MEMCACHED_PROCESS_COMMAND_START(c->sfd, c->rcurr, c->rbytes);
+memcached.c:    c->noreply = true;
+memcached.c:    switch (c->cmd) {
+memcached.c:        c->cmd = PROTOCOL_BINARY_CMD_SET;
+memcached.c:        c->cmd = PROTOCOL_BINARY_CMD_ADD;
+memcached.c:        c->cmd = PROTOCOL_BINARY_CMD_REPLACE;
+memcached.c:        c->cmd = PROTOCOL_BINARY_CMD_DELETE;
+memcached.c:        c->cmd = PROTOCOL_BINARY_CMD_INCREMENT;
+memcached.c:        c->cmd = PROTOCOL_BINARY_CMD_DECREMENT;
+memcached.c:        c->cmd = PROTOCOL_BINARY_CMD_QUIT;
+memcached.c:        c->cmd = PROTOCOL_BINARY_CMD_FLUSH;
+memcached.c:        c->cmd = PROTOCOL_BINARY_CMD_APPEND;
+memcached.c:        c->cmd = PROTOCOL_BINARY_CMD_PREPEND;
+memcached.c:        c->cmd = PROTOCOL_BINARY_CMD_GET;
+memcached.c:        c->cmd = PROTOCOL_BINARY_CMD_GETK;
+memcached.c:        c->cmd = PROTOCOL_BINARY_CMD_GAT;
+memcached.c:        c->cmd = PROTOCOL_BINARY_CMD_GAT;
+memcached.c:        c->noreply = false;
+memcached.c:    switch (c->cmd) {
+memcached.c:                c->write_and_go = conn_closing;
+memcached.c:                if (c->noreply) {
+memcached.c:    nkey = c->binary_header.request.keylen;
+memcached.c:    vlen = c->binary_header.request.bodylen - (nkey + c->binary_header.request.extlen);
+memcached.c:        if (c->cmd == PROTOCOL_BINARY_CMD_ADD) {
+memcached.c:            fprintf(stderr, "<%d ADD ", c->sfd);
+memcached.c:        } else if (c->cmd == PROTOCOL_BINARY_CMD_SET) {
+memcached.c:            fprintf(stderr, "<%d SET ", c->sfd);
+memcached.c:            fprintf(stderr, "<%d REPLACE ", c->sfd);
+memcached.c:        if (c->cmd == PROTOCOL_BINARY_CMD_SET) {
+memcached.c:        c->write_and_go = conn_swallow;
+memcached.c:    ITEM_set_cas(it, c->binary_header.request.cas);
+memcached.c:    switch (c->cmd) {
+memcached.c:            c->cmd = NREAD_ADD;
+memcached.c:            c->cmd = NREAD_SET;
+memcached.c:            c->cmd = NREAD_REPLACE;
+memcached.c:        c->cmd = NREAD_CAS;
+memcached.c:    c->item = it;
+memcached.c:    c->ritem = ITEM_data(it);
+memcached.c:    c->rlbytes = vlen;
+memcached.c:    c->substate = bin_read_set_value;
+memcached.c:    nkey = c->binary_header.request.keylen;
+memcached.c:    vlen = c->binary_header.request.bodylen - nkey;
+memcached.c:        c->write_and_go = conn_swallow;
+memcached.c:    ITEM_set_cas(it, c->binary_header.request.cas);
+memcached.c:    switch (c->cmd) {
+memcached.c:            c->cmd = NREAD_APPEND;
+memcached.c:            c->cmd = NREAD_PREPEND;
+memcached.c:    c->item = it;
+memcached.c:    c->ritem = ITEM_data(it);
+memcached.c:    c->rlbytes = vlen;
+memcached.c:    c->substate = bin_read_set_value;
+memcached.c:    if (c->binary_header.request.extlen == sizeof(req->message.body)) {
+memcached.c:    c->thread->stats.flush_cmds++;
+memcached.c:    size_t nkey = c->binary_header.request.keylen;
+memcached.c:            MEMCACHED_COMMAND_DELETE(c->sfd, ITEM_key(it), it->nkey);
+memcached.c:            c->thread->stats.slab_stats[it->slabs_clsid].delete_hits++;
+memcached.c:        c->thread->stats.delete_misses++;
+memcached.c:    assert(c->cmd >= 0);
+memcached.c:    switch(c->substate) {
+memcached.c:        if (c->cmd == PROTOCOL_BINARY_CMD_APPEND ||
+memcached.c:                c->cmd == PROTOCOL_BINARY_CMD_PREPEND) {
+memcached.c:        fprintf(stderr, "Not handling substate %d\n", c->substate);
+memcached.c:    c->cmd = -1;
+memcached.c:    c->substate = bin_no_state;
+memcached.c:    if(c->item != NULL) {
+memcached.c:        item_remove(c->item);
+memcached.c:        c->item = NULL;
+memcached.c:    if (c->rbytes > 0) {
+memcached.c:    assert(c->protocol == ascii_prot
+memcached.c:           || c->protocol == binary_prot);
+memcached.c:    if (c->protocol == ascii_prot) {
+memcached.c:    } else if (c->protocol == binary_prot) {
+memcached.c:            c->thread->stats.cas_misses++;
+memcached.c:            c->thread->stats.slab_stats[old_it->slabs_clsid].cas_hits++;
+memcached.c:            c->thread->stats.slab_stats[old_it->slabs_clsid].cas_badval++;
+memcached.c:            c->cas = ITEM_get_cas(it);
+memcached.c:        c->cas = ITEM_get_cas(it);
+memcached.c:        c->write_and_free = buf;
+memcached.c:        c->wcurr = buf;
+memcached.c:        c->wbytes = bytes;
+memcached.c:        c->write_and_go = conn_new_cmd;
+memcached.c:        c->noreply = true;
+memcached.c:    return c->noreply;
+memcached.c:            if (c->stats.buffer == NULL) {
+memcached.c:                write_and_free(c, c->stats.buffer, c->stats.offset);
+memcached.c:                c->stats.buffer = NULL;
+memcached.c:    if (c->stats.buffer == NULL) {
+memcached.c:        write_and_free(c, c->stats.buffer, c->stats.offset);
+memcached.c:        c->stats.buffer = NULL;
+memcached.c:                if (i >= c->isize) {
+memcached.c:                    item **new_list = excitevm_srealloc(c->ilist, sizeof(item *) * c->isize * 2);
+memcached.c:                        c->isize *= 2;
+memcached.c:                        c->ilist = new_list;
+memcached.c:                  MEMCACHED_COMMAND_GET(c->sfd, ITEM_key(it), it->nkey,
+memcached.c:                  if (i >= c->suffixsize) {
+memcached.c:                    char **new_suffix_list = excitevm_srealloc(c->suffixlist,
+memcached.c:                                           sizeof(char *) * c->suffixsize * 2);
+memcached.c:                        c->suffixsize *= 2;
+memcached.c:                        c->suffixlist  = new_suffix_list;
+memcached.c:                  suffix = cache_alloc(c->thread->suffix_cache);
+memcached.c:                  *(c->suffixlist + i) = suffix;
+memcached.c:                  MEMCACHED_COMMAND_GET(c->sfd, ITEM_key(it), it->nkey,
+memcached.c:                    fprintf(stderr, ">%d sending key %s\n", c->sfd, ITEM_key(it));
+memcached.c:                c->thread->stats.slab_stats[it->slabs_clsid].get_hits++;
+memcached.c:                c->thread->stats.get_cmds++;
+memcached.c:                *(c->ilist + i) = it;
+memcached.c:                c->thread->stats.get_misses++;
+memcached.c:                c->thread->stats.get_cmds++;
+memcached.c:                MEMCACHED_COMMAND_GET(c->sfd, key, nkey, -1, 0);
+memcached.c:    c->icurr = c->ilist;
+memcached.c:    c->ileft = i;
+memcached.c:        c->suffixcurr = c->suffixlist;
+memcached.c:        c->suffixleft = i;
+memcached.c:        fprintf(stderr, ">%d END\n", c->sfd);
+memcached.c:        || (IS_UDP(c->transport) && build_udp_headers(c) != 0)) {
+memcached.c:        c->msgcurr = 0;
+memcached.c:        c->write_and_go = conn_swallow;
+memcached.c:        c->sbytes = vlen;
+memcached.c:    c->item = it;
+memcached.c:    c->ritem = ITEM_data(it);
+memcached.c:    c->rlbytes = it->nbytes;
+memcached.c:    c->cmd = comm;
+memcached.c:        c->thread->stats.touch_cmds++;
+memcached.c:        c->thread->stats.slab_stats[it->slabs_clsid].touch_hits++;
+memcached.c:        c->thread->stats.touch_cmds++;
+memcached.c:        c->thread->stats.touch_misses++;
+memcached.c:            c->thread->stats.incr_misses++;
+memcached.c:            c->thread->stats.decr_misses++;
+memcached.c:        MEMCACHED_COMMAND_INCR(c->sfd, ITEM_key(it), it->nkey, value);
+memcached.c:        MEMCACHED_COMMAND_DECR(c->sfd, ITEM_key(it), it->nkey, value);
+memcached.c:        c->thread->stats.slab_stats[it->slabs_clsid].incr_hits++;
+memcached.c:        c->thread->stats.slab_stats[it->slabs_clsid].decr_hits++;
+memcached.c:        MEMCACHED_COMMAND_DELETE(c->sfd, ITEM_key(it), it->nkey);
+memcached.c:        c->thread->stats.slab_stats[it->slabs_clsid].delete_hits++;
+memcached.c:        c->thread->stats.delete_misses++;
+memcached.c:    MEMCACHED_PROCESS_COMMAND_START(c->sfd, c->rcurr, c->rbytes);
+memcached.c:        fprintf(stderr, "<%d %s\n", c->sfd, command);
+memcached.c:    c->msgcurr = 0;
+memcached.c:    c->msgused = 0;
+memcached.c:    c->iovused = 0;
+memcached.c:        c->thread->stats.flush_cmds++;
+memcached.c:        if(ntokens == (c->noreply ? 3 : 2)) {
+memcached.c:    assert(c->rcurr <= (c->rbuf + c->rsize));
+memcached.c:    assert(c->rbytes > 0);
+memcached.c:    if (c->protocol == negotiating_prot || c->transport == udp_transport)  {
+memcached.c:        if ((unsigned char)c->rbuf[0] == (unsigned char)PROTOCOL_BINARY_REQ) {
+memcached.c:            c->protocol = binary_prot;
+memcached.c:            c->protocol = ascii_prot;
+memcached.c:            fprintf(stderr, "%d: Client using the %s protocol\n", c->sfd,
+memcached.c:                    prot_text(c->protocol));
+memcached.c:    if (c->protocol == binary_prot) {
+memcached.c:        if (c->rbytes < sizeof(c->binary_header)) {
+memcached.c:            if (((long)(c->rcurr)) % 8 != 0) {
+memcached.c:                memmove(c->rbuf, c->rcurr, c->rbytes);
+memcached.c:                c->rcurr = c->rbuf;
+memcached.c:                    fprintf(stderr, "%d: Realign input buffer\n", c->sfd);
+memcached.c:            req = (protocol_binary_request_header*)c->rcurr;
+memcached.c:                fprintf(stderr, "<%d Read binary protocol data:", c->sfd);
+memcached.c:                        fprintf(stderr, "\n<%d   ", c->sfd);
+memcached.c:            c->binary_header = *req;
+memcached.c:            c->binary_header.request.keylen = ntohs(req->request.keylen);
+memcached.c:            c->binary_header.request.bodylen = ntohl(req->request.bodylen);
+memcached.c:            c->binary_header.request.cas = ntohll(req->request.cas);
+memcached.c:            if (c->binary_header.request.magic != PROTOCOL_BINARY_REQ) {
+memcached.c:                            c->binary_header.request.magic);
+memcached.c:            c->msgcurr = 0;
+memcached.c:            c->msgused = 0;
+memcached.c:            c->iovused = 0;
+memcached.c:            c->cmd = c->binary_header.request.opcode;
+memcached.c:            c->keylen = c->binary_header.request.keylen;
+memcached.c:            c->opaque = c->binary_header.request.opaque;
+memcached.c:            c->cas = 0;
+memcached.c:            c->rbytes -= sizeof(c->binary_header);
+memcached.c:            c->rcurr += sizeof(c->binary_header);
+memcached.c:        if (c->rbytes == 0)
+memcached.c:        el = memchr(c->rcurr, '\n', c->rbytes);
+memcached.c:            if (c->rbytes > 1024) {
+memcached.c:                char *ptr = c->rcurr;
+memcached.c:                if (ptr - c->rcurr > 100 ||
+memcached.c:        if ((el - c->rcurr) > 1 && *(el - 1) == '\r') {
+memcached.c:        assert(cont <= (c->rcurr + c->rbytes));
+memcached.c:        process_command(c, c->rcurr);
+memcached.c:        c->rbytes -= (cont - c->rcurr);
+memcached.c:        c->rcurr = cont;
+memcached.c:        assert(c->rcurr <= (c->rbuf + c->rsize));
+memcached.c:    c->request_addr_size = sizeof(c->request_addr);
+memcached.c:    res = recvfrom(c->sfd, c->rbuf, c->rsize,
+memcached.c:                   0, &c->request_addr, &c->request_addr_size);
+memcached.c:        unsigned char *buf = (unsigned char *)c->rbuf;
+memcached.c:        c->thread->stats.bytes_read += res;
+memcached.c:        c->request_id = buf[0] * 256 + buf[1];
+memcached.c:        memmove(c->rbuf, c->rbuf + 8, res);
+memcached.c:        c->rbytes = res;
+memcached.c:        c->rcurr = c->rbuf;
+memcached.c:    if (c->rcurr != c->rbuf) {
+memcached.c:        if (c->rbytes != 0) /* otherwise there's nothing to copy */
+memcached.c:            memmove(c->rbuf, c->rcurr, c->rbytes);
+memcached.c:        c->rcurr = c->rbuf;
+memcached.c:        if (c->rbytes >= c->rsize) {
+memcached.c:            char *new_rbuf = excitevm_srealloc(c->rbuf, c->rsize * 2);
+memcached.c:                c->rbytes = 0; /* ignore what we read */
+memcached.c:                c->write_and_go = conn_closing;
+memcached.c:            c->rcurr = c->rbuf = new_rbuf;
+memcached.c:            c->rsize *= 2;
+memcached.c:        int avail = c->rsize - c->rbytes;
+memcached.c:        res = read(c->sfd, c->rbuf + c->rbytes, avail);
+memcached.c:printf("HERE6: %d  %d %d\n",c->sfd,  avail, errno);
+memcached.c:            c->thread->stats.bytes_read += res;
+memcached.c:            c->rbytes += res;
+memcached.c:    struct event_base *base = c->event.ev_base;
+memcached.c:    if (c->ev_flags == new_flags)
+memcached.c:    if (event_del(&c->event) == -1) return false;
+memcached.c:    event_set(&c->event, c->sfd, new_flags, event_handler, (void *)c);
+memcached.c:    event_base_set(base, &c->event);
+memcached.c:    c->ev_flags = new_flags;
+memcached.c:    if (event_add(&c->event, 0) == -1) return false;
+memcached.c: *   TRANSMIT_HARD_ERROR Can't write (c->state is set to conn_closing)
+memcached.c:    if (c->msgcurr < c->msgused &&
+memcached.c:            c->msglist[c->msgcurr].msg_iovlen == 0) {
+memcached.c:        c->msgcurr++;
+memcached.c:    if (c->msgcurr < c->msgused) {
+memcached.c:        struct msghdr *m = &c->msglist[c->msgcurr];
+memcached.c:        res = sendmsg(c->sfd, m, 0);
+memcached.c:            c->thread->stats.bytes_written += res;
+memcached.c:        if (IS_UDP(c->transport))
+memcached.c:printf("HERE3 %d\n", c->state);
+memcached.c:        switch(c->state) {
+memcached.c:        printf("State: %d\n", c->state);
+memcached.c:            if ((sfd = accept(c->sfd, (struct sockaddr *)&addr, &addrlen)) == -1) {
+memcached.c:            res = IS_UDP(c->transport) ? try_read_udp(c) : try_read_network(c);
+memcached.c:                c->thread->stats.conn_yields++;
+memcached.c:                if (c->rbytes > 0) {
+memcached.c:            if (c->rlbytes == 0) {
+memcached.c:            if (c->rbytes > 0) {
+memcached.c:                int tocopy = c->rbytes > c->rlbytes ? c->rlbytes : c->rbytes;
+memcached.c:                if (c->ritem != c->rcurr) {
+memcached.c:                    memmove(c->ritem, c->rcurr, tocopy);
+memcached.c:                c->ritem += tocopy;
+memcached.c:                c->rlbytes -= tocopy;
+memcached.c:                c->rcurr += tocopy;
+memcached.c:                c->rbytes -= tocopy;
+memcached.c:                if (c->rlbytes == 0) {
+memcached.c:            res = read(c->sfd, c->ritem, c->rlbytes);
+memcached.c:                c->thread->stats.bytes_read += res;
+memcached.c:                if (c->rcurr == c->ritem) {
+memcached.c:                    c->rcurr += res;
+memcached.c:                c->ritem += res;
+memcached.c:                c->rlbytes -= res;
+memcached.c:                        (long)c->rcurr, (long)c->ritem, (long)c->rbuf,
+memcached.c:                        (int)c->rlbytes, (int)c->rsize);
+memcached.c:            if (c->sbytes == 0) {
+memcached.c:            if (c->rbytes > 0) {
+memcached.c:                int tocopy = c->rbytes > c->sbytes ? c->sbytes : c->rbytes;
+memcached.c:                c->sbytes -= tocopy;
+memcached.c:                c->rcurr += tocopy;
+memcached.c:                c->rbytes -= tocopy;
+memcached.c:            res = read(c->sfd, c->rbuf, c->rsize > c->sbytes ? c->sbytes : c->rsize);
+memcached.c:                c->thread->stats.bytes_read += res;
+memcached.c:                c->sbytes -= res;
+memcached.c:            if (c->iovused == 0 || (IS_UDP(c->transport) && c->iovused == 1)) {
+memcached.c:                if (add_iov(c, c->wcurr, c->wbytes) != 0) {
+memcached.c:          if (IS_UDP(c->transport) && c->msgcurr == 0 && build_udp_headers(c) != 0) {
+memcached.c:                if (c->state == conn_mwrite) {
+memcached.c:                    while (c->ileft > 0) {
+memcached.c:                        item *it = *(c->icurr);
+memcached.c:                        c->icurr++;
+memcached.c:                        c->ileft--;
+memcached.c:                    while (c->suffixleft > 0) {
+memcached.c:                        char *suffix = *(c->suffixcurr);
+memcached.c:                        cache_free(c->thread->suffix_cache, suffix);
+memcached.c:                        c->suffixcurr++;
+memcached.c:                        c->suffixleft--;
+memcached.c:                    if(c->protocol == binary_prot) {
+memcached.c:                        conn_set_state(c, c->write_and_go);
+memcached.c:                } else if (c->state == conn_write) {
+memcached.c:                    if (c->write_and_free) {
+memcached.c:                         excitevm_sfree(c->write_and_free);
+memcached.c:                        c->write_and_free = 0;
+memcached.c:                    conn_set_state(c, c->write_and_go);
+memcached.c:                        fprintf(stderr, "Unexpected state %d\n", c->state);
+memcached.c:            if (IS_UDP(c->transport))
+memcached.c:    c->which = which;
+memcached.c:    if (fd != c->sfd) {
+sasl_defs.c:/* -*- Mode: C; tab-width: 4; c-basic-offset: 4; indent-tabs-mode: nil -*- */
+slabs.c:/* -*- Mode: C; tab-width: 4; c-basic-offset: 4; indent-tabs-mode: nil -*- */
+stats.c:/* -*- Mode: C; tab-width: 4; c-basic-offset: 4; indent-tabs-mode: nil -*- */
+testapp.c:/* -*- Mode: C; tab-width: 4; c-basic-offset: 4; indent-tabs-mode: nil -*- */
+thread.c:/* -*- Mode: C; tab-width: 4; c-basic-offset: 4; indent-tabs-mode: nil -*- */
+thread.c:            c->thread = me;
